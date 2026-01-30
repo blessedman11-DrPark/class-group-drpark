@@ -163,7 +163,7 @@
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 18px;
             resize: vertical;
         }
 
@@ -181,15 +181,15 @@
         /* 카드 그리드 */
         .cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px;
-            padding: 20px 0;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            padding: 15px 0;
         }
 
         /* 카드 스타일 */
         .card {
             perspective: 1000px;
-            height: 120px;
+            height: 90px;
             cursor: pointer;
         }
 
@@ -221,8 +221,8 @@
         .card-front {
             background: white;
             color: #333;
-            font-size: 22px;
-            padding: 10px;
+            font-size: 18px;
+            padding: 8px;
             text-align: center;
         }
 
@@ -419,7 +419,6 @@
             display: flex;
             gap: 10px;
             align-items: center;
-            margin-bottom: 8px;
             flex-wrap: wrap;
         }
 
@@ -428,6 +427,32 @@
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
+        }
+
+        /* 과목 정보 표시 */
+        .subject-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .subject-info .info-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .subject-info .info-detail {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .subject-info .info-detail span {
+            font-weight: bold;
+            color: #667eea;
         }
 
         /* 푸터 */
@@ -496,6 +521,12 @@
                     <!-- 동적으로 생성됨 -->
                 </div>
             </div>
+        </div>
+
+        <!-- 과목 정보 -->
+        <div class="subject-info" id="subjectInfo" style="display: none;">
+            <div class="info-title" id="infoTitle"></div>
+            <div class="info-detail" id="infoDetail"></div>
         </div>
 
         <!-- 카드 영역 -->
@@ -656,6 +687,22 @@
         function renderCards() {
             const container = document.getElementById('cardsContainer');
             const viewAllBtn = document.getElementById('viewAllBtn');
+            const subjectInfo = document.getElementById('subjectInfo');
+            const infoTitle = document.getElementById('infoTitle');
+            const infoDetail = document.getElementById('infoDetail');
+
+            // 과목 정보 표시
+            if (currentSubjectId && students.length > 0) {
+                const selectedSubject = subjects.find(s => s.id === currentSubjectId);
+                const groupSize = parseInt(document.getElementById('groupSize').value) || 4;
+                const totalGroups = Math.ceil(students.length / groupSize);
+
+                subjectInfo.style.display = 'block';
+                infoTitle.textContent = selectedSubject ? selectedSubject.name : '';
+                infoDetail.innerHTML = `전체 <span>${students.length}명</span> / ${groupSize}명씩 <span>${totalGroups}개 조</span> 편성`;
+            } else {
+                subjectInfo.style.display = 'none';
+            }
 
             if (students.length === 0) {
                 container.innerHTML = '<p class="message">등록된 학생이 없습니다.</p>';

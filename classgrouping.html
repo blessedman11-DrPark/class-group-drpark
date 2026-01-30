@@ -520,7 +520,7 @@
         // Supabase 설정
         const SUPABASE_URL = 'https://ikazynxmkdqmzresahoe.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrYXp5bnhta2RxbXpyZXNhaG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NTcyMTAsImV4cCI6MjA4NTMzMzIxMH0.cnRxbkCCtRn1Q4g29DxUjEoYS8sYAEAECvlDBM8Gzt4';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 상태 변수
         let isAdmin = false;
@@ -538,7 +538,7 @@
 
         // 과목 로드
         async function loadSubjects() {
-            const { data, error } = await supabase
+            const { data, error } = await db
                 .from('subjects')
                 .select('*')
                 .order('id');
@@ -587,7 +587,7 @@
         async function loadStudents() {
             if (!currentSubjectId) return;
 
-            const { data, error } = await supabase
+            const { data, error } = await db
                 .from('students')
                 .select('*')
                 .eq('subject_id', currentSubjectId)
@@ -611,7 +611,7 @@
         async function loadGroupAssignments() {
             if (!currentSubjectId) return;
 
-            const { data, error } = await supabase
+            const { data, error } = await db
                 .from('group_assignments')
                 .select('*')
                 .eq('subject_id', currentSubjectId);
@@ -720,12 +720,12 @@
             }
 
             // 기존 학생 삭제
-            await supabase
+            await db
                 .from('group_assignments')
                 .delete()
                 .eq('subject_id', currentSubjectId);
 
-            await supabase
+            await db
                 .from('students')
                 .delete()
                 .eq('subject_id', currentSubjectId);
@@ -736,7 +736,7 @@
                 name: name
             }));
 
-            const { error } = await supabase
+            const { error } = await db
                 .from('students')
                 .insert(newStudents);
 
@@ -757,7 +757,7 @@
             for (const subject of subjects) {
                 const input = document.getElementById(`subject-name-${subject.id}`);
                 if (input && input.value !== subject.name) {
-                    await supabase
+                    await db
                         .from('subjects')
                         .update({ name: input.value })
                         .eq('id', subject.id);
@@ -787,7 +787,7 @@
             }
 
             // 기존 조편성 삭제
-            await supabase
+            await db
                 .from('group_assignments')
                 .delete()
                 .eq('subject_id', currentSubjectId);
@@ -807,7 +807,7 @@
                 group_number: (index % totalGroups) + 1
             }));
 
-            const { error } = await supabase
+            const { error } = await db
                 .from('group_assignments')
                 .insert(assignments);
 
@@ -833,7 +833,7 @@
                 return;
             }
 
-            await supabase
+            await db
                 .from('group_assignments')
                 .delete()
                 .eq('subject_id', currentSubjectId);

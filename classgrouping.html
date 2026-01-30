@@ -522,6 +522,16 @@
                     <!-- 동적으로 생성됨 -->
                 </div>
             </div>
+
+            <div class="subject-edit-area">
+                <div class="subject-edit-header">
+                    <h4>과목별 암호 설정</h4>
+                    <button class="admin-btn primary" onclick="saveSubjectPasswords()">암호 저장</button>
+                </div>
+                <div id="subjectPasswordList">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+            </div>
         </div>
 
         <!-- 과목 정보 -->
@@ -550,6 +560,18 @@
             <button onclick="login()">확인</button>
             <button onclick="hideLoginModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
             <p class="login-error" id="loginError"></p>
+        </div>
+    </div>
+
+    <!-- 과목 암호 확인 모달 -->
+    <div class="login-modal" id="subjectPasswordModal">
+        <div class="login-box">
+            <h3 id="subjectPasswordTitle">과목 암호 입력</h3>
+            <input type="password" id="subjectPasswordInput" placeholder="암호를 입력하세요" onkeypress="if(event.key==='Enter') verifySubjectPassword()">
+            <br>
+            <button onclick="verifySubjectPassword()">확인</button>
+            <button onclick="hideSubjectPasswordModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
+            <p class="login-error" id="subjectPasswordError"></p>
         </div>
     </div>
 
@@ -604,6 +626,7 @@
             subjects = data;
             renderSubjectButtons();
             renderSubjectEditList();
+            renderSubjectPasswordList();
         }
 
         // 과목 버튼 렌더링
@@ -620,15 +643,94 @@
         // 과목명 편집 리스트 렌더링
         function renderSubjectEditList() {
             const container = document.getElementById('subjectEditList');
-            container.innerHTML = subjects.map(subject => `
+            container.innerHTML = `
                 <div class="subject-edit-row">
-                    <input type="text" id="subject-name-${subject.id}" value="${subject.name}">
+                    ${subjects.map(subject => `
+                        <input type="text" id="subject-name-${subject.id}" value="${subject.name}">
+                    `).join('')}
                 </div>
-            `).join('');
+            `;
         }
 
-        // 과목 선택
+        // 과목별 암호 편집 리스트 렌더링
+        function renderSubjectPasswordList() {
+            const container = document.getElementById('subjectPasswordList');
+            container.innerHTML = `
+                <div class="subject-edit-row">
+                    ${subjects.map(subject => `
+                        <input type="text" id="subject-pw-${subject.id}" value="${subject.password || ''}" placeholder="${subject.name}">
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 과목별 암호 저장
+        async function saveSubjectPasswords() {
+            for (const subject of subjects) {
+                const input = document.getElementById(`subject-pw-${subject.id}`);
+                if (input) {
+                    const newPassword = input.value.trim();
+                    if (newPassword !== (subject.password || '')) {
+                        await db
+                            .from('subjects')
+                            .update({ password: newPassword })
+                            .eq('id', subject.id);
+                        subject.password = newPassword;
+                    }
+                }
+            }
+            alert('과목별 암호가 저장되었습니다.');
+        }
+
+        // 과목 암호 확인 모달 표시
+        let pendingSubjectId = null;
+
+        function showSubjectPasswordModal(subjectId) {
+            const subject = subjects.find(s => s.id === subjectId);
+            if (!subject) return;
+
+            pendingSubjectId = subjectId;
+            document.getElementById('subjectPasswordTitle').textContent = `${subject.name} 암호 입력`;
+            document.getElementById('subjectPasswordModal').classList.add('show');
+            document.getElementById('subjectPasswordInput').focus();
+            document.getElementById('subjectPasswordError').textContent = '';
+        }
+
+        function hideSubjectPasswordModal() {
+            document.getElementById('subjectPasswordModal').classList.remove('show');
+            document.getElementById('subjectPasswordInput').value = '';
+            pendingSubjectId = null;
+        }
+
+        async function verifySubjectPassword() {
+            if (!pendingSubjectId) return;
+
+            const subject = subjects.find(s => s.id === pendingSubjectId);
+            const inputPassword = document.getElementById('subjectPasswordInput').value;
+
+            if (inputPassword === (subject.password || '')) {
+                hideSubjectPasswordModal();
+                await doSelectSubject(pendingSubjectId);
+            } else {
+                document.getElementById('subjectPasswordError').textContent = '암호가 틀렸습니다.';
+            }
+        }
+
+        // 과목 선택 (버튼 클릭 시)
         async function selectSubject(subjectId) {
+            const subject = subjects.find(s => s.id === subjectId);
+
+            // 관리자이거나 암호가 없는 경우 바로 선택
+            if (isAdmin || !subject.password || subject.password === '') {
+                await doSelectSubject(subjectId);
+            } else {
+                // 암호 확인 모달 표시
+                showSubjectPasswordModal(subjectId);
+            }
+        }
+
+        // 실제 과목 선택 처리
+        async function doSelectSubject(subjectId) {
             currentSubjectId = subjectId;
             renderSubjectButtons();
 
@@ -982,6 +1084,12 @@
         document.getElementById('loginModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 hideLoginModal();
+            }
+        });
+
+        document.getElementById('subjectPasswordModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideSubjectPasswordModal();
             }
         });
     </script>

@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조편성 프로그램</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* 과목 버튼 영역 */
+        .subject-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .subject-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .subject-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .subject-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 관리자 패널 */
+        .admin-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .admin-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .admin-controls input {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .admin-controls input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .admin-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .admin-btn.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .admin-btn.danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .admin-btn.success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .admin-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* 학생 명단 편집 */
+        .student-list-editor {
+            margin-top: 15px;
+        }
+
+        .student-list-editor textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .student-list-editor textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .editor-hint {
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* 카드 그리드 */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        /* 카드 스타일 */
+        .card {
+            perspective: 1000px;
+            height: 120px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .card-front {
+            background: white;
+            color: #333;
+            font-size: 16px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 24px;
+            transform: rotateY(180deg);
+        }
+
+        /* 전체보기 버튼 */
+        .view-all-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .view-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        /* 전체보기 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .group-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .group-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+        }
+
+        .group-card h4 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 8px;
+        }
+
+        .group-card ul {
+            list-style: none;
+        }
+
+        .group-card li {
+            padding: 5px 0;
+            font-size: 14px;
+        }
+
+        /* 로그인 모달 */
+        .login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+        }
+
+        .login-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .login-box h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .login-box input {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            width: 200px;
+        }
+
+        .login-box button {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .login-error {
+            color: #e74c3c;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* 메시지 */
+        .message {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            padding: 40px;
+        }
+
+        /* 과목명 수정 */
+        .subject-edit-area {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .subject-edit-area h4 {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .subject-edit-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .subject-edit-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        /* 푸터 */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>조편성 프로그램</h1>
+
+        <!-- 과목 버튼 -->
+        <div class="subject-buttons" id="subjectButtons">
+            <!-- 동적으로 생성됨 -->
+        </div>
+
+        <!-- 관리자 로그인 버튼 -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="admin-btn primary" id="adminLoginBtn" onclick="showLoginModal()">
+                교수님 로그인
+            </button>
+            <button class="admin-btn" id="adminLogoutBtn" style="display: none; background: #95a5a6;" onclick="logout()">
+                로그아웃
+            </button>
+        </div>
+
+        <!-- 관리자 패널 (로그인 후 표시) -->
+        <div class="admin-panel" id="adminPanel" style="display: none;">
+            <h3>관리자 패널</h3>
+
+            <div class="admin-controls">
+                <label>조당 인원수:</label>
+                <input type="number" id="groupSize" min="2" max="10" value="4" style="width: 80px;">
+                <button class="admin-btn success" onclick="assignGroups()">조편성 실행</button>
+                <button class="admin-btn danger" onclick="resetGroups()">조편성 초기화</button>
+            </div>
+
+            <div class="student-list-editor">
+                <h4>학생 명단 편집</h4>
+                <textarea id="studentListText" placeholder="학생 이름을 한 줄에 하나씩 입력하세요."></textarea>
+                <p class="editor-hint">* 한 줄에 학생 이름 하나씩 입력 후 저장 버튼을 클릭하세요.</p>
+                <button class="admin-btn primary" onclick="saveStudentList()" style="margin-top: 10px;">학생 명단 저장</button>
+            </div>
+
+            <div class="subject-edit-area">
+                <h4>과목명 수정</h4>
+                <div id="subjectEditList">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+                <button class="admin-btn primary" onclick="saveSubjectNames()" style="margin-top: 10px;">과목명 저장</button>
+            </div>
+        </div>
+
+        <!-- 카드 영역 -->
+        <div class="cards-container" id="cardsContainer">
+            <p class="message">과목을 선택해주세요.</p>
+        </div>
+
+        <!-- 전체보기 버튼 -->
+        <button class="view-all-btn" id="viewAllBtn" style="display: none;" onclick="showAllGroups()">
+            전체 보기
+        </button>
+    </div>
+
+    <!-- 로그인 모달 -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-box">
+            <h3>교수님 인증</h3>
+            <input type="password" id="passwordInput" placeholder="암호를 입력하세요" onkeypress="if(event.key==='Enter') login()">
+            <br>
+            <button onclick="login()">확인</button>
+            <button onclick="hideLoginModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
+            <p class="login-error" id="loginError"></p>
+        </div>
+    </div>
+
+    <!-- 전체보기 모달 -->
+    <div class="modal" id="groupModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="hideGroupModal()">&times;</span>
+            <h2>조별 명단</h2>
+            <div class="group-list" id="groupList">
+                <!-- 동적으로 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="footer">
+        <p>Made by Dr.Park | Powered by <a href="https://supabase.com" target="_blank">Supabase</a></p>
+    </div>
+
+    <script>
+        // Supabase 설정
+        const SUPABASE_URL = 'https://ikazynxmkdqmzresahoe.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrYXp5bnhta2RxbXpyZXNhaG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NTcyMTAsImV4cCI6MjA4NTMzMzIxMH0.cnRxbkCCtRn1Q4g29DxUjEoYS8sYAEAECvlDBM8Gzt4';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 상태 변수
+        let isAdmin = false;
+        let currentSubjectId = null;
+        let subjects = [];
+        let students = [];
+        let groupAssignments = [];
+
+        const ADMIN_PASSWORD = 'ingenium';
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSubjects();
+        });
+
+        // 과목 로드
+        async function loadSubjects() {
+            const { data, error } = await supabase
+                .from('subjects')
+                .select('*')
+                .order('id');
+
+            if (error) {
+                console.error('과목 로드 에러:', error);
+                return;
+            }
+
+            subjects = data;
+            renderSubjectButtons();
+            renderSubjectEditList();
+        }
+
+        // 과목 버튼 렌더링
+        function renderSubjectButtons() {
+            const container = document.getElementById('subjectButtons');
+            container.innerHTML = subjects.map(subject => `
+                <button class="subject-btn ${currentSubjectId === subject.id ? 'active' : ''}"
+                        onclick="selectSubject(${subject.id})">
+                    ${subject.name}
+                </button>
+            `).join('');
+        }
+
+        // 과목명 편집 리스트 렌더링
+        function renderSubjectEditList() {
+            const container = document.getElementById('subjectEditList');
+            container.innerHTML = subjects.map(subject => `
+                <div class="subject-edit-row">
+                    <input type="text" id="subject-name-${subject.id}" value="${subject.name}">
+                </div>
+            `).join('');
+        }
+
+        // 과목 선택
+        async function selectSubject(subjectId) {
+            currentSubjectId = subjectId;
+            renderSubjectButtons();
+            await loadStudents();
+            await loadGroupAssignments();
+            renderCards();
+        }
+
+        // 학생 로드
+        async function loadStudents() {
+            if (!currentSubjectId) return;
+
+            const { data, error } = await supabase
+                .from('students')
+                .select('*')
+                .eq('subject_id', currentSubjectId)
+                .order('id');
+
+            if (error) {
+                console.error('학생 로드 에러:', error);
+                return;
+            }
+
+            students = data;
+
+            // 관리자 패널의 학생 명단 텍스트 업데이트
+            if (isAdmin) {
+                document.getElementById('studentListText').value =
+                    students.map(s => s.name).join('\n');
+            }
+        }
+
+        // 조편성 결과 로드
+        async function loadGroupAssignments() {
+            if (!currentSubjectId) return;
+
+            const { data, error } = await supabase
+                .from('group_assignments')
+                .select('*')
+                .eq('subject_id', currentSubjectId);
+
+            if (error) {
+                console.error('조편성 로드 에러:', error);
+                return;
+            }
+
+            groupAssignments = data;
+        }
+
+        // 카드 렌더링
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            const viewAllBtn = document.getElementById('viewAllBtn');
+
+            if (students.length === 0) {
+                container.innerHTML = '<p class="message">등록된 학생이 없습니다.</p>';
+                viewAllBtn.style.display = 'none';
+                return;
+            }
+
+            container.innerHTML = students.map(student => {
+                const assignment = groupAssignments.find(a => a.student_id === student.id);
+                const groupNum = assignment ? assignment.group_number : '?';
+
+                return `
+                    <div class="card" onclick="flipCard(this)">
+                        <div class="card-inner">
+                            <div class="card-front">${student.name}</div>
+                            <div class="card-back">${groupNum}조</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            viewAllBtn.style.display = groupAssignments.length > 0 ? 'block' : 'none';
+        }
+
+        // 카드 뒤집기
+        function flipCard(card) {
+            card.classList.add('flipped');
+            setTimeout(() => {
+                card.classList.remove('flipped');
+            }, 2000);
+        }
+
+        // 로그인 모달 표시
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('show');
+            document.getElementById('passwordInput').focus();
+            document.getElementById('loginError').textContent = '';
+        }
+
+        // 로그인 모달 숨김
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.remove('show');
+            document.getElementById('passwordInput').value = '';
+        }
+
+        // 로그인
+        function login() {
+            const password = document.getElementById('passwordInput').value;
+
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                hideLoginModal();
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('adminLoginBtn').style.display = 'none';
+                document.getElementById('adminLogoutBtn').style.display = 'inline-block';
+
+                // 현재 선택된 과목의 학생 명단 표시
+                if (currentSubjectId) {
+                    document.getElementById('studentListText').value =
+                        students.map(s => s.name).join('\n');
+                }
+            } else {
+                document.getElementById('loginError').textContent = '암호가 틀렸습니다.';
+            }
+        }
+
+        // 로그아웃
+        function logout() {
+            isAdmin = false;
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminLoginBtn').style.display = 'inline-block';
+            document.getElementById('adminLogoutBtn').style.display = 'none';
+        }
+
+        // 학생 명단 저장
+        async function saveStudentList() {
+            if (!currentSubjectId) {
+                alert('먼저 과목을 선택해주세요.');
+                return;
+            }
+
+            const text = document.getElementById('studentListText').value;
+            const names = text.split('\n')
+                .map(name => name.trim())
+                .filter(name => name.length > 0);
+
+            if (names.length === 0) {
+                alert('학생 이름을 입력해주세요.');
+                return;
+            }
+
+            // 기존 학생 삭제
+            await supabase
+                .from('group_assignments')
+                .delete()
+                .eq('subject_id', currentSubjectId);
+
+            await supabase
+                .from('students')
+                .delete()
+                .eq('subject_id', currentSubjectId);
+
+            // 새 학생 추가
+            const newStudents = names.map(name => ({
+                subject_id: currentSubjectId,
+                name: name
+            }));
+
+            const { error } = await supabase
+                .from('students')
+                .insert(newStudents);
+
+            if (error) {
+                console.error('학생 저장 에러:', error);
+                alert('저장 중 오류가 발생했습니다.');
+                return;
+            }
+
+            alert('학생 명단이 저장되었습니다.');
+            await loadStudents();
+            await loadGroupAssignments();
+            renderCards();
+        }
+
+        // 과목명 저장
+        async function saveSubjectNames() {
+            for (const subject of subjects) {
+                const input = document.getElementById(`subject-name-${subject.id}`);
+                if (input && input.value !== subject.name) {
+                    await supabase
+                        .from('subjects')
+                        .update({ name: input.value })
+                        .eq('id', subject.id);
+                }
+            }
+
+            alert('과목명이 저장되었습니다.');
+            await loadSubjects();
+        }
+
+        // 조편성 실행
+        async function assignGroups() {
+            if (!currentSubjectId) {
+                alert('먼저 과목을 선택해주세요.');
+                return;
+            }
+
+            if (students.length === 0) {
+                alert('학생이 없습니다. 먼저 학생 명단을 등록해주세요.');
+                return;
+            }
+
+            const groupSize = parseInt(document.getElementById('groupSize').value);
+            if (groupSize < 2 || groupSize > 10) {
+                alert('조당 인원수는 2~10명 사이로 설정해주세요.');
+                return;
+            }
+
+            // 기존 조편성 삭제
+            await supabase
+                .from('group_assignments')
+                .delete()
+                .eq('subject_id', currentSubjectId);
+
+            // 학생 섞기 (Fisher-Yates 알고리즘)
+            const shuffled = [...students];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            // 조 배정
+            const totalGroups = Math.ceil(shuffled.length / groupSize);
+            const assignments = shuffled.map((student, index) => ({
+                subject_id: currentSubjectId,
+                student_id: student.id,
+                group_number: (index % totalGroups) + 1
+            }));
+
+            const { error } = await supabase
+                .from('group_assignments')
+                .insert(assignments);
+
+            if (error) {
+                console.error('조편성 에러:', error);
+                alert('조편성 중 오류가 발생했습니다.');
+                return;
+            }
+
+            alert(`조편성이 완료되었습니다. (총 ${totalGroups}개 조)`);
+            await loadGroupAssignments();
+            renderCards();
+        }
+
+        // 조편성 초기화
+        async function resetGroups() {
+            if (!currentSubjectId) {
+                alert('먼저 과목을 선택해주세요.');
+                return;
+            }
+
+            if (!confirm('조편성을 초기화하시겠습니까?')) {
+                return;
+            }
+
+            await supabase
+                .from('group_assignments')
+                .delete()
+                .eq('subject_id', currentSubjectId);
+
+            alert('조편성이 초기화되었습니다.');
+            await loadGroupAssignments();
+            renderCards();
+        }
+
+        // 전체보기 모달 표시
+        function showAllGroups() {
+            const groupMap = {};
+
+            for (const assignment of groupAssignments) {
+                const student = students.find(s => s.id === assignment.student_id);
+                if (student) {
+                    if (!groupMap[assignment.group_number]) {
+                        groupMap[assignment.group_number] = [];
+                    }
+                    groupMap[assignment.group_number].push(student.name);
+                }
+            }
+
+            const groupList = document.getElementById('groupList');
+            groupList.innerHTML = Object.keys(groupMap)
+                .sort((a, b) => a - b)
+                .map(groupNum => `
+                    <div class="group-card">
+                        <h4>${groupNum}조</h4>
+                        <ul>
+                            ${groupMap[groupNum].map(name => `<li>${name}</li>`).join('')}
+                        </ul>
+                    </div>
+                `).join('');
+
+            document.getElementById('groupModal').classList.add('show');
+        }
+
+        // 전체보기 모달 숨김
+        function hideGroupModal() {
+            document.getElementById('groupModal').classList.remove('show');
+        }
+
+        // 모달 외부 클릭시 닫기
+        document.getElementById('groupModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideGroupModal();
+            }
+        });
+
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideLoginModal();
+            }
+        });
+    </script>
+</body>
+</html>

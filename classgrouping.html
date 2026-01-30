@@ -24,11 +24,32 @@
             margin: 0 auto;
         }
 
+        /* 헤더 영역 */
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
         h1 {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 0;
+        }
+
+        .header-login {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .header-login .admin-btn {
+            padding: 8px 16px;
+            font-size: 14px;
         }
 
         /* 과목 버튼 영역 */
@@ -411,21 +432,22 @@
 </head>
 <body>
     <div class="container">
-        <h1>조편성 프로그램</h1>
+        <!-- 헤더: 제목 + 로그인 버튼 -->
+        <div class="header">
+            <h1>조편성 프로그램</h1>
+            <div class="header-login">
+                <button class="admin-btn primary" id="adminLoginBtn" onclick="showLoginModal()">
+                    교수님 로그인
+                </button>
+                <button class="admin-btn" id="adminLogoutBtn" style="display: none; background: #95a5a6;" onclick="logout()">
+                    로그아웃
+                </button>
+            </div>
+        </div>
 
         <!-- 과목 버튼 -->
         <div class="subject-buttons" id="subjectButtons">
             <!-- 동적으로 생성됨 -->
-        </div>
-
-        <!-- 관리자 로그인 버튼 -->
-        <div style="text-align: center; margin-bottom: 20px;">
-            <button class="admin-btn primary" id="adminLoginBtn" onclick="showLoginModal()">
-                교수님 로그인
-            </button>
-            <button class="admin-btn" id="adminLogoutBtn" style="display: none; background: #95a5a6;" onclick="logout()">
-                로그아웃
-            </button>
         </div>
 
         <!-- 관리자 패널 (로그인 후 표시) -->

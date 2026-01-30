@@ -419,14 +419,15 @@
             display: flex;
             gap: 10px;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .subject-edit-row input {
-            width: 120px;
-            padding: 8px 12px;
+            width: 100px;
+            padding: 8px 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            font-size: 14px;
         }
 
         /* 과목 정보 표시 */
@@ -500,7 +501,7 @@
 
             <div class="admin-controls">
                 <label>조당 인원수:</label>
-                <input type="number" id="groupSize" min="2" max="10" value="4" style="width: 80px;">
+                <input type="number" id="groupSize" min="2" max="10" value="4" style="width: 80px;" onchange="saveGroupSize()">
                 <button class="admin-btn success" onclick="assignGroups()">조편성 실행</button>
                 <button class="admin-btn danger" onclick="resetGroups()">조편성 초기화</button>
             </div>
@@ -631,14 +632,36 @@
             currentSubjectId = subjectId;
             renderSubjectButtons();
 
-            // 현재 선택된 과목명 표시
+            // 현재 선택된 과목명 표시 및 조당 인원수 불러오기
             const selectedSubject = subjects.find(s => s.id === subjectId);
             if (selectedSubject) {
                 document.getElementById('currentSubjectName').textContent = `- ${selectedSubject.name}`;
+                document.getElementById('groupSize').value = selectedSubject.group_size || 4;
             }
 
             await loadStudents();
             await loadGroupAssignments();
+            renderCards();
+        }
+
+        // 조당 인원수 저장
+        async function saveGroupSize() {
+            if (!currentSubjectId) return;
+
+            const groupSize = parseInt(document.getElementById('groupSize').value);
+            if (groupSize < 2 || groupSize > 10) return;
+
+            await db
+                .from('subjects')
+                .update({ group_size: groupSize })
+                .eq('id', currentSubjectId);
+
+            // 로컬 데이터 업데이트
+            const subject = subjects.find(s => s.id === currentSubjectId);
+            if (subject) {
+                subject.group_size = groupSize;
+            }
+
             renderCards();
         }
 

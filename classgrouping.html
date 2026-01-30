@@ -216,7 +216,7 @@
         .card-front {
             background: white;
             color: #333;
-            font-size: 16px;
+            font-size: 22px;
             padding: 10px;
             text-align: center;
         }
@@ -463,8 +463,8 @@
 
             <div class="student-list-editor">
                 <h4>학생 명단 편집 <span id="currentSubjectName" style="color: #667eea;">(과목을 선택하세요)</span></h4>
-                <textarea id="studentListText" placeholder="학생 이름을 한 줄에 하나씩 입력하세요."></textarea>
-                <p class="editor-hint">* 한 줄에 학생 이름 하나씩 입력 후 저장 버튼을 클릭하세요.</p>
+                <textarea id="studentListText" placeholder="예: 홍길동, 백두산, 금강산"></textarea>
+                <p class="editor-hint">* 학생 이름을 콤마(,)로 구분하여 입력 후 저장 버튼을 클릭하세요.</p>
                 <button class="admin-btn primary" onclick="saveStudentList()" style="margin-top: 10px;">학생 명단 저장</button>
             </div>
 
@@ -610,7 +610,7 @@
             // 관리자 패널의 학생 명단 텍스트 업데이트
             if (isAdmin) {
                 document.getElementById('studentListText').value =
-                    students.map(s => s.name).join('\n');
+                    students.map(s => s.name).join(', ');
             }
         }
 
@@ -694,7 +694,7 @@
                 // 현재 선택된 과목의 학생 명단 표시
                 if (currentSubjectId) {
                     document.getElementById('studentListText').value =
-                        students.map(s => s.name).join('\n');
+                        students.map(s => s.name).join(', ');
                 }
             } else {
                 document.getElementById('loginError').textContent = '암호가 틀렸습니다.';
@@ -717,7 +717,7 @@
             }
 
             const text = document.getElementById('studentListText').value;
-            const names = text.split('\n')
+            const names = text.split(',')
                 .map(name => name.trim())
                 .filter(name => name.length > 0);
 

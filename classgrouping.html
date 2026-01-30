@@ -67,17 +67,16 @@
             border: none;
             border-radius: 25px;
             cursor: pointer;
-            background: white;
             font-weight: bold;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .subject-btn:nth-child(1) { color: #e74c3c; border: 2px solid #e74c3c; }
-        .subject-btn:nth-child(2) { color: #3498db; border: 2px solid #3498db; }
-        .subject-btn:nth-child(3) { color: #27ae60; border: 2px solid #27ae60; }
-        .subject-btn:nth-child(4) { color: #9b59b6; border: 2px solid #9b59b6; }
-        .subject-btn:nth-child(5) { color: #f39c12; border: 2px solid #f39c12; }
+        .subject-btn:nth-child(1) { background: #ffebee; color: #c62828; }
+        .subject-btn:nth-child(2) { background: #e3f2fd; color: #1565c0; }
+        .subject-btn:nth-child(3) { background: #e8f5e9; color: #2e7d32; }
+        .subject-btn:nth-child(4) { background: #f3e5f5; color: #7b1fa2; }
+        .subject-btn:nth-child(5) { background: #fff8e1; color: #f57f17; }
 
         .subject-btn:hover {
             transform: translateY(-2px);
@@ -330,8 +329,8 @@
         }
 
         .group-card li {
-            padding: 8px 0;
-            font-size: 20px;
+            padding: 10px 0;
+            font-size: 24px;
         }
 
         /* 로그인 모달 */
@@ -404,8 +403,15 @@
             border-top: 1px solid #eee;
         }
 
-        .subject-edit-area h4 {
+        .subject-edit-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             margin-bottom: 10px;
+        }
+
+        .subject-edit-header h4 {
+            margin: 0;
             color: #666;
         }
 
@@ -414,10 +420,11 @@
             gap: 10px;
             align-items: center;
             margin-bottom: 8px;
+            flex-wrap: wrap;
         }
 
         .subject-edit-row input {
-            flex: 1;
+            width: 120px;
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -481,11 +488,13 @@
             </div>
 
             <div class="subject-edit-area">
-                <h4>과목명 수정</h4>
+                <div class="subject-edit-header">
+                    <h4>과목명 수정</h4>
+                    <button class="admin-btn primary" onclick="saveSubjectNames()">과목명 저장</button>
+                </div>
                 <div id="subjectEditList">
                     <!-- 동적으로 생성됨 -->
                 </div>
-                <button class="admin-btn primary" onclick="saveSubjectNames()" style="margin-top: 10px;">과목명 저장</button>
             </div>
         </div>
 

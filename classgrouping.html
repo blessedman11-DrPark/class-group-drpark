@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>조편성 프로그램</title>
+    <title>박헌규 교수님 과목 조편성 프로그램</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -62,27 +62,33 @@
         }
 
         .subject-btn {
-            padding: 12px 24px;
-            font-size: 16px;
+            padding: 14px 28px;
+            font-size: 18px;
             border: none;
             border-radius: 25px;
             cursor: pointer;
             background: white;
-            color: #667eea;
             font-weight: bold;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
+
+        .subject-btn:nth-child(1) { color: #e74c3c; border: 2px solid #e74c3c; }
+        .subject-btn:nth-child(2) { color: #3498db; border: 2px solid #3498db; }
+        .subject-btn:nth-child(3) { color: #27ae60; border: 2px solid #27ae60; }
+        .subject-btn:nth-child(4) { color: #9b59b6; border: 2px solid #9b59b6; }
+        .subject-btn:nth-child(5) { color: #f39c12; border: 2px solid #f39c12; }
 
         .subject-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
 
-        .subject-btn.active {
-            background: #667eea;
-            color: white;
-        }
+        .subject-btn:nth-child(1).active { background: #e74c3c; color: white; }
+        .subject-btn:nth-child(2).active { background: #3498db; color: white; }
+        .subject-btn:nth-child(3).active { background: #27ae60; color: white; }
+        .subject-btn:nth-child(4).active { background: #9b59b6; color: white; }
+        .subject-btn:nth-child(5).active { background: #f39c12; color: white; }
 
         /* 관리자 패널 */
         .admin-panel {
@@ -300,15 +306,21 @@
         }
 
         .group-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 12px;
             padding: 20px;
             color: white;
         }
 
+        .group-card:nth-child(6n+1) { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .group-card:nth-child(6n+2) { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        .group-card:nth-child(6n+3) { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); }
+        .group-card:nth-child(6n+4) { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
+        .group-card:nth-child(6n+5) { background: linear-gradient(135deg, #f39c12 0%, #d68910 100%); }
+        .group-card:nth-child(6n+6) { background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); }
+
         .group-card h4 {
             margin-bottom: 10px;
-            font-size: 18px;
+            font-size: 22px;
             border-bottom: 2px solid rgba(255,255,255,0.3);
             padding-bottom: 8px;
         }
@@ -318,8 +330,8 @@
         }
 
         .group-card li {
-            padding: 5px 0;
-            font-size: 14px;
+            padding: 8px 0;
+            font-size: 20px;
         }
 
         /* 로그인 모달 */
@@ -434,13 +446,13 @@
     <div class="container">
         <!-- 헤더: 제목 + 로그인 버튼 -->
         <div class="header">
-            <h1>조편성 프로그램</h1>
+            <h1>박헌규 교수님 과목 조편성 프로그램</h1>
             <div class="header-login">
                 <button class="admin-btn primary" id="adminLoginBtn" onclick="showLoginModal()">
                     교수님 로그인
                 </button>
-                <button class="admin-btn" id="adminLogoutBtn" style="display: none; background: #95a5a6;" onclick="logout()">
-                    로그아웃
+                <button class="admin-btn" id="adminLogoutBtn" style="display: none; background: #3498db;" onclick="goHome()">
+                    홈페이지
                 </button>
             </div>
         </div>
@@ -701,12 +713,9 @@
             }
         }
 
-        // 로그아웃
-        function logout() {
-            isAdmin = false;
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('adminLoginBtn').style.display = 'inline-block';
-            document.getElementById('adminLogoutBtn').style.display = 'none';
+        // 홈페이지로 이동 (새로고침)
+        function goHome() {
+            window.location.reload();
         }
 
         // 학생 명단 저장
@@ -718,7 +727,7 @@
 
             const text = document.getElementById('studentListText').value;
             const names = text.split(',')
-                .map(name => name.trim())
+                .map(name => name.trim().replace(/^["']|["']$/g, '').trim())
                 .filter(name => name.length > 0);
 
             if (names.length === 0) {

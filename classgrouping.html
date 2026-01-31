@@ -423,7 +423,7 @@
         }
 
         .subject-edit-row input {
-            width: 100px;
+            width: 150px;
             padding: 8px 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -558,7 +558,7 @@
             <input type="password" id="passwordInput" placeholder="암호를 입력하세요" onkeypress="if(event.key==='Enter') login()">
             <br>
             <button onclick="login()">확인</button>
-            <button onclick="hideLoginModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
+            <button id="loginCancelBtn" onclick="hideLoginModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
             <p class="login-error" id="loginError"></p>
         </div>
     </div>
@@ -570,7 +570,7 @@
             <input type="password" id="subjectPasswordInput" placeholder="암호를 입력하세요" onkeypress="if(event.key==='Enter') verifySubjectPassword()">
             <br>
             <button onclick="verifySubjectPassword()">확인</button>
-            <button onclick="hideSubjectPasswordModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
+            <button id="subjectPasswordCancelBtn" onclick="hideSubjectPasswordModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
             <p class="login-error" id="subjectPasswordError"></p>
         </div>
     </div>
@@ -604,7 +604,7 @@
         let students = [];
         let groupAssignments = [];
 
-        const ADMIN_PASSWORD = 'ingenium';
+        const ADMIN_PASSWORDS = ['ingenium', 'p'];
 
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
@@ -656,11 +656,11 @@
         function renderSubjectPasswordList() {
             const container = document.getElementById('subjectPasswordList');
             container.innerHTML = `
-                <div class="subject-edit-row">
+                <div class="subject-edit-row" style="flex-wrap: wrap;">
                     ${subjects.map(subject => `
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="font-size: 14px; color: #333; min-width: 60px;">${subject.name}</span>
-                            <input type="text" id="subject-pw-${subject.id}" value="${subject.password || ''}" placeholder="암호">
+                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                            <span style="font-size: 14px; color: #333; min-width: 80px; font-weight: bold;">${subject.name}</span>
+                            <input type="text" id="subject-pw-${subject.id}" value="${subject.password || ''}" placeholder="암호" style="width: 100px;">
                         </div>
                     `).join('')}
                 </div>
@@ -712,10 +712,14 @@
             const inputPassword = document.getElementById('subjectPasswordInput').value;
 
             if (inputPassword === (subject.password || '')) {
+                document.getElementById('subjectPasswordCancelBtn').textContent = '취소';
                 hideSubjectPasswordModal();
                 await doSelectSubject(pendingSubjectId);
             } else {
                 document.getElementById('subjectPasswordError').textContent = '암호가 틀렸습니다.';
+                document.getElementById('subjectPasswordCancelBtn').textContent = '재시도';
+                document.getElementById('subjectPasswordInput').value = '';
+                document.getElementById('subjectPasswordInput').focus();
             }
         }
 
@@ -880,9 +884,10 @@
         function login() {
             const password = document.getElementById('passwordInput').value;
 
-            if (password === ADMIN_PASSWORD) {
+            if (ADMIN_PASSWORDS.includes(password)) {
                 isAdmin = true;
                 hideLoginModal();
+                document.getElementById('loginCancelBtn').textContent = '취소';
                 document.getElementById('adminPanel').style.display = 'block';
                 document.getElementById('adminLoginBtn').style.display = 'none';
                 document.getElementById('adminLogoutBtn').style.display = 'inline-block';
@@ -894,6 +899,9 @@
                 }
             } else {
                 document.getElementById('loginError').textContent = '암호가 틀렸습니다.';
+                document.getElementById('loginCancelBtn').textContent = '재시도';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
             }
         }
 

@@ -658,7 +658,10 @@
             container.innerHTML = `
                 <div class="subject-edit-row">
                     ${subjects.map(subject => `
-                        <input type="text" id="subject-pw-${subject.id}" value="${subject.password || ''}" placeholder="${subject.name}">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="font-size: 14px; color: #333; min-width: 60px;">${subject.name}</span>
+                            <input type="text" id="subject-pw-${subject.id}" value="${subject.password || ''}" placeholder="암호">
+                        </div>
                     `).join('')}
                 </div>
             `;

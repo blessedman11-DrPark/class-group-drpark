@@ -284,8 +284,8 @@
             background: white;
             border-radius: 15px;
             padding: 30px;
-            max-width: 800px;
-            width: 90%;
+            max-width: 1000px;
+            width: 95%;
             max-height: 80vh;
             overflow-y: auto;
             position: relative;
@@ -781,12 +781,13 @@
                     <p>→ 10 ÷ 4 = 2조 + 2명 남음 → 2명 < 3명(기준) → <strong>2개 조</strong> (5명×2조로 분배)</p>
                 </div>
             </div>
+            <button class="show-all-groups-btn" onclick="hideRulesModal()" style="margin-top: 20px;">닫기</button>
         </div>
     </div>
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.23)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.24)</p>
     </div>
 
     <script>
@@ -1032,19 +1033,39 @@
             const infoTitle = document.getElementById('infoTitle');
             const infoDetail = document.getElementById('infoDetail');
 
-            // 과목 정보 표시 (실제 조편성 로직과 동일하게 계산)
+            // 과목 정보 표시
             if (currentSubjectId && students.length > 0) {
                 const selectedSubject = subjects.find(s => s.id === currentSubjectId);
                 const groupSize = parseInt(document.getElementById('groupSize').value) || 4;
-                const totalGroups = calculateTotalGroups(students.length, groupSize);
-                const sizeRange = calculateGroupSizeRange(students.length, groupSize);
-
                 const isPending = groupAssignments.length === 0;
+
+                let totalGroups, sizeRangeDisplay;
+
+                if (isPending) {
+                    // 미편성 상태: 예상값 계산
+                    totalGroups = calculateTotalGroups(students.length, groupSize);
+                    sizeRangeDisplay = calculateGroupSizeRange(students.length, groupSize).display;
+                } else {
+                    // 편성 완료: 실제 데이터 사용
+                    const groupNumbers = [...new Set(groupAssignments.map(a => a.group_number))];
+                    totalGroups = groupNumbers.length;
+
+                    // 각 조별 인원수 계산
+                    const groupCounts = {};
+                    groupAssignments.forEach(a => {
+                        groupCounts[a.group_number] = (groupCounts[a.group_number] || 0) + 1;
+                    });
+                    const counts = Object.values(groupCounts);
+                    const minSize = Math.min(...counts);
+                    const maxSize = Math.max(...counts);
+                    sizeRangeDisplay = minSize === maxSize ? `${minSize}명` : `${minSize}~${maxSize}명`;
+                }
+
                 const pendingText = isPending ? ' <span class="pending-status">(미편성, 대기중)</span>' : '';
 
                 subjectInfo.style.display = 'block';
                 infoTitle.textContent = selectedSubject ? selectedSubject.name : '';
-                infoDetail.innerHTML = `전체 <span>${students.length}명</span> / ${sizeRange.display}씩 <span>${totalGroups}개 조</span> 편성${pendingText}`;
+                infoDetail.innerHTML = `전체 <span>${students.length}명</span> / ${sizeRangeDisplay}씩 <span>${totalGroups}개 조</span> 편성${pendingText}`;
             } else {
                 subjectInfo.style.display = 'none';
             }

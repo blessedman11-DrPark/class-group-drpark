@@ -221,7 +221,7 @@
         .card-front {
             background: white;
             color: #333;
-            font-size: 18px;
+            font-size: 22px;
             padding: 8px;
             text-align: center;
         }
@@ -377,8 +377,8 @@
         }
 
         .group-card-back li {
-            padding: 4px 8px;
-            font-size: 18px;
+            padding: 5px 10px;
+            font-size: 22px;
             background: rgba(255,255,255,0.2);
             border-radius: 5px;
             width: calc(50% - 3px);
@@ -621,31 +621,12 @@
         }
 
         /* 교수님 암호 수정 스타일 */
-        .password-input-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
         .admin-pw-input {
             width: 120px;
-            padding: 8px 30px 8px 10px;
+            padding: 8px 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 14px;
-            user-select: none;
-        }
-
-        .password-toggle:hover {
-            opacity: 0.7;
         }
     </style>
 </head>
@@ -714,14 +695,8 @@
                 <div class="subject-edit-header" style="flex-wrap: wrap; gap: 10px;">
                     <h4>교수님 암호 수정</h4>
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <div class="password-input-wrapper">
-                            <input type="password" id="adminPw1" class="admin-pw-input" placeholder="암호 1">
-                            <span class="password-toggle" onclick="togglePasswordVisibility('adminPw1', this)">👁️</span>
-                        </div>
-                        <div class="password-input-wrapper">
-                            <input type="password" id="adminPw2" class="admin-pw-input" placeholder="암호 2">
-                            <span class="password-toggle" onclick="togglePasswordVisibility('adminPw2', this)">👁️</span>
-                        </div>
+                        <input type="password" id="adminPw1" class="admin-pw-input" placeholder="암호 1">
+                        <input type="password" id="adminPw2" class="admin-pw-input" placeholder="암호 2">
                         <button class="admin-btn primary" onclick="saveAdminPasswords()">암호 저장</button>
                     </div>
                 </div>
@@ -838,7 +813,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.27)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.28)</p>
     </div>
 
     <script>
@@ -1523,6 +1498,9 @@
             document.getElementById('groupModal').classList.add('show');
         }
 
+        // 조 전체보기 상태
+        let isShowingAll = false;
+
         // 조 카드 뒤집기
         function flipGroupCard(card) {
             if (isShowingAll) return; // 전체보기 상태에서는 개별 클릭 무시
@@ -1530,7 +1508,6 @@
         }
 
         // 조 전체보기
-        let isShowingAll = false;
         function showAllGroupsAtOnce() {
             const cards = document.querySelectorAll('#groupList .group-card');
             isShowingAll = !isShowingAll;
@@ -1586,18 +1563,6 @@
                 hideRulesModal();
             }
         });
-
-        // 암호 보이기/숨기기 토글
-        function togglePasswordVisibility(inputId, toggleElement) {
-            const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                toggleElement.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                toggleElement.textContent = '👁️';
-            }
-        }
 
         // 교수님 암호 저장 (Supabase)
         async function saveAdminPasswords() {

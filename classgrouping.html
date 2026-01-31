@@ -678,7 +678,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.21)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.22)</p>
     </div>
 
     <script>
@@ -929,13 +929,14 @@
                 const selectedSubject = subjects.find(s => s.id === currentSubjectId);
                 const groupSize = parseInt(document.getElementById('groupSize').value) || 4;
                 const totalGroups = calculateTotalGroups(students.length, groupSize);
+                const sizeRange = calculateGroupSizeRange(students.length, groupSize);
 
                 const isPending = groupAssignments.length === 0;
                 const pendingText = isPending ? ' <span class="pending-status">(미편성, 대기중)</span>' : '';
 
                 subjectInfo.style.display = 'block';
                 infoTitle.textContent = selectedSubject ? selectedSubject.name : '';
-                infoDetail.innerHTML = `전체 <span>${students.length}명</span> / ${groupSize}명씩 <span>${totalGroups}개 조</span> 편성${pendingText}`;
+                infoDetail.innerHTML = `전체 <span>${students.length}명</span> / ${sizeRange.display}씩 <span>${totalGroups}개 조</span> 편성${pendingText}`;
             } else {
                 subjectInfo.style.display = 'none';
             }
@@ -1114,6 +1115,43 @@
             }
         }
 
+        // 조별 인원 범위 계산 함수 (예: "3명" 또는 "3~4명")
+        function calculateGroupSizeRange(studentCount, groupSize) {
+            if (studentCount === 0) return { min: 0, max: 0, display: '0명' };
+
+            const threshold = getNewGroupThreshold(groupSize);
+            const baseGroups = Math.floor(studentCount / groupSize);
+            const remainder = studentCount % groupSize;
+
+            let minSize, maxSize;
+
+            if (remainder === 0) {
+                // 딱 나누어 떨어짐
+                minSize = groupSize;
+                maxSize = groupSize;
+            } else if (remainder >= threshold) {
+                // 새 조 생성 (마지막 조는 remainder명)
+                minSize = remainder;
+                maxSize = groupSize;
+            } else {
+                // 기존 조에 분배
+                const totalGroups = baseGroups === 0 ? 1 : baseGroups;
+                const studentsPerGroup = Math.floor(studentCount / totalGroups);
+                const extraStudents = studentCount % totalGroups;
+
+                if (extraStudents === 0) {
+                    minSize = studentsPerGroup;
+                    maxSize = studentsPerGroup;
+                } else {
+                    minSize = studentsPerGroup;
+                    maxSize = studentsPerGroup + 1;
+                }
+            }
+
+            const display = minSize === maxSize ? `${minSize}명` : `${minSize}~${maxSize}명`;
+            return { min: minSize, max: maxSize, display };
+        }
+
         // 조편성 실행
         async function assignGroups() {
             if (!currentSubjectId) {
@@ -1277,20 +1315,31 @@
             const subjectName = selectedSubject ? selectedSubject.name : '';
             document.getElementById('groupModalTitle').textContent = `[${subjectName}] 조별 명단`;
 
+            // 상태 초기화
+            isShowingAll = false;
             document.getElementById('groupModal').classList.add('show');
         }
 
         // 조 카드 뒤집기
         function flipGroupCard(card) {
-            if (card.classList.contains('show-all')) return;
+            if (isShowingAll) return; // 전체보기 상태에서는 개별 클릭 무시
             card.classList.toggle('flipped');
         }
 
         // 조 전체보기
+        let isShowingAll = false;
         function showAllGroupsAtOnce() {
             const cards = document.querySelectorAll('#groupList .group-card');
+            isShowingAll = !isShowingAll;
+
             cards.forEach(card => {
-                card.classList.toggle('show-all');
+                // 기존 flipped 클래스 제거하고 show-all로 통일
+                card.classList.remove('flipped');
+                if (isShowingAll) {
+                    card.classList.add('show-all');
+                } else {
+                    card.classList.remove('show-all');
+                }
             });
         }
 

@@ -371,7 +371,7 @@ h1 {
 .group-card-back li {
     padding: 5px 10px;
     font-size: 22px;
-    background: rgba(255,255,255,0.2);
+    background: transparent;
     border-radius: 5px;
     width: calc(50% - 3px);
     text-align: center;
@@ -479,6 +479,15 @@ h1 {
     background: rgba(255,255,255,0.1);
     border-radius: 15px;
     border: 2px dashed rgba(255,255,255,0.3);
+    grid-column: 1 / -1;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .guide-message {
+        white-space: normal;
+        font-size: 18px;
+    }
 }
 
 /* 과목명 수정 */

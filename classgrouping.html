@@ -559,6 +559,7 @@
             <br>
             <button onclick="login()">확인</button>
             <button id="loginCancelBtn" onclick="hideLoginModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
+            <button id="loginRetryBtn" onclick="retryLogin()" style="background: #3498db; margin-left: 10px; display: none;">재시도</button>
             <p class="login-error" id="loginError"></p>
         </div>
     </div>
@@ -571,6 +572,7 @@
             <br>
             <button onclick="verifySubjectPassword()">확인</button>
             <button id="subjectPasswordCancelBtn" onclick="hideSubjectPasswordModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
+            <button id="subjectPasswordRetryBtn" onclick="retrySubjectPassword()" style="background: #3498db; margin-left: 10px; display: none;">재시도</button>
             <p class="login-error" id="subjectPasswordError"></p>
         </div>
     </div>
@@ -702,6 +704,9 @@
         function hideSubjectPasswordModal() {
             document.getElementById('subjectPasswordModal').classList.remove('show');
             document.getElementById('subjectPasswordInput').value = '';
+            document.getElementById('subjectPasswordError').textContent = '';
+            document.getElementById('subjectPasswordRetryBtn').style.display = 'none';
+            document.getElementById('subjectPasswordCancelBtn').style.display = 'inline-block';
             pendingSubjectId = null;
         }
 
@@ -712,15 +717,22 @@
             const inputPassword = document.getElementById('subjectPasswordInput').value;
 
             if (inputPassword === (subject.password || '')) {
-                document.getElementById('subjectPasswordCancelBtn').textContent = '취소';
                 hideSubjectPasswordModal();
                 await doSelectSubject(pendingSubjectId);
             } else {
                 document.getElementById('subjectPasswordError').textContent = '암호가 틀렸습니다.';
-                document.getElementById('subjectPasswordCancelBtn').textContent = '재시도';
-                document.getElementById('subjectPasswordInput').value = '';
-                document.getElementById('subjectPasswordInput').focus();
+                document.getElementById('subjectPasswordCancelBtn').style.display = 'none';
+                document.getElementById('subjectPasswordRetryBtn').style.display = 'inline-block';
             }
+        }
+
+        // 과목 암호 재시도
+        function retrySubjectPassword() {
+            document.getElementById('subjectPasswordInput').value = '';
+            document.getElementById('subjectPasswordInput').focus();
+            document.getElementById('subjectPasswordError').textContent = '';
+            document.getElementById('subjectPasswordRetryBtn').style.display = 'none';
+            document.getElementById('subjectPasswordCancelBtn').style.display = 'inline-block';
         }
 
         // 과목 선택 (버튼 클릭 시)
@@ -878,6 +890,9 @@
         function hideLoginModal() {
             document.getElementById('loginModal').classList.remove('show');
             document.getElementById('passwordInput').value = '';
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('loginRetryBtn').style.display = 'none';
+            document.getElementById('loginCancelBtn').style.display = 'inline-block';
         }
 
         // 로그인
@@ -887,7 +902,6 @@
             if (ADMIN_PASSWORDS.includes(password)) {
                 isAdmin = true;
                 hideLoginModal();
-                document.getElementById('loginCancelBtn').textContent = '취소';
                 document.getElementById('adminPanel').style.display = 'block';
                 document.getElementById('adminLoginBtn').style.display = 'none';
                 document.getElementById('adminLogoutBtn').style.display = 'inline-block';
@@ -899,10 +913,18 @@
                 }
             } else {
                 document.getElementById('loginError').textContent = '암호가 틀렸습니다.';
-                document.getElementById('loginCancelBtn').textContent = '재시도';
-                document.getElementById('passwordInput').value = '';
-                document.getElementById('passwordInput').focus();
+                document.getElementById('loginCancelBtn').style.display = 'none';
+                document.getElementById('loginRetryBtn').style.display = 'inline-block';
             }
+        }
+
+        // 로그인 재시도
+        function retryLogin() {
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('loginRetryBtn').style.display = 'none';
+            document.getElementById('loginCancelBtn').style.display = 'inline-block';
         }
 
         // 홈페이지로 이동 (새로고침)
@@ -1007,12 +1029,14 @@
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
 
-            // 조 배정
-            const totalGroups = Math.ceil(shuffled.length / groupSize);
+            // 조 배정 (마지막 조가 인원수보다 적으면 이전 조에 합침)
+            let totalGroups = Math.floor(shuffled.length / groupSize);
+            if (totalGroups === 0) totalGroups = 1;
+
             const assignments = shuffled.map((student, index) => ({
                 subject_id: currentSubjectId,
                 student_id: student.id,
-                group_number: (index % totalGroups) + 1
+                group_number: Math.min(Math.floor(index / groupSize) + 1, totalGroups)
             }));
 
             const { error } = await db

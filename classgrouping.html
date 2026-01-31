@@ -1029,15 +1029,32 @@
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
 
-            // 조 배정 (마지막 조가 인원수보다 적으면 이전 조에 합침)
+            // 조 배정 (마지막 조가 부족하면 앞 조에 1명씩 분배, 각 조는 최대 1명만 더)
             let totalGroups = Math.floor(shuffled.length / groupSize);
             if (totalGroups === 0) totalGroups = 1;
+            const remainder = shuffled.length % groupSize;
 
-            const assignments = shuffled.map((student, index) => ({
-                subject_id: currentSubjectId,
-                student_id: student.id,
-                group_number: Math.min(Math.floor(index / groupSize) + 1, totalGroups)
-            }));
+            const assignments = shuffled.map((student, index) => {
+                let groupNumber;
+                const extraSlots = remainder * (groupSize + 1);
+
+                if (remainder > 0 && index < extraSlots) {
+                    // 앞 조들은 1명씩 더 받음
+                    groupNumber = Math.floor(index / (groupSize + 1)) + 1;
+                } else if (remainder > 0) {
+                    // 나머지 조들은 기본 인원
+                    groupNumber = remainder + Math.floor((index - extraSlots) / groupSize) + 1;
+                } else {
+                    // 나머지 없으면 균등 배분
+                    groupNumber = Math.floor(index / groupSize) + 1;
+                }
+
+                return {
+                    subject_id: currentSubjectId,
+                    student_id: student.id,
+                    group_number: groupNumber
+                };
+            });
 
             const { error } = await db
                 .from('group_assignments')

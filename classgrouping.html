@@ -678,7 +678,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.20)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.21)</p>
     </div>
 
     <script>
@@ -928,8 +928,7 @@
             if (currentSubjectId && students.length > 0) {
                 const selectedSubject = subjects.find(s => s.id === currentSubjectId);
                 const groupSize = parseInt(document.getElementById('groupSize').value) || 4;
-                let totalGroups = Math.floor(students.length / groupSize);
-                if (totalGroups === 0) totalGroups = 1;
+                const totalGroups = calculateTotalGroups(students.length, groupSize);
 
                 const isPending = groupAssignments.length === 0;
                 const pendingText = isPending ? ' <span class="pending-status">(미편성, 대기중)</span>' : '';
@@ -1092,6 +1091,29 @@
             await loadSubjects();
         }
 
+        // 남은 인원으로 새 조를 만들 기준 (조당 인원별 최소 인원)
+        function getNewGroupThreshold(groupSize) {
+            const thresholds = { 2: 2, 3: 2, 4: 3, 5: 3, 6: 4, 7: 4, 8: 5, 9: 5, 10: 6 };
+            return thresholds[groupSize] || Math.ceil(groupSize * 0.6);
+        }
+
+        // 조 개수 계산 함수
+        function calculateTotalGroups(studentCount, groupSize) {
+            if (studentCount === 0) return 0;
+
+            const threshold = getNewGroupThreshold(groupSize);
+            const baseGroups = Math.floor(studentCount / groupSize);
+            const remainder = studentCount % groupSize;
+
+            if (remainder === 0) {
+                return baseGroups;
+            } else if (remainder >= threshold) {
+                return baseGroups + 1;
+            } else {
+                return baseGroups === 0 ? 1 : baseGroups;
+            }
+        }
+
         // 조편성 실행
         async function assignGroups() {
             if (!currentSubjectId) {
@@ -1123,35 +1145,63 @@
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
 
-            // 조 배정 (마지막 조가 부족하면 뒤에서 앞으로 1명씩 추가)
-            let totalGroups = Math.floor(shuffled.length / groupSize);
-            if (totalGroups === 0) totalGroups = 1;
+            // 조 편성 계산
+            const threshold = getNewGroupThreshold(groupSize);
+            const baseGroups = Math.floor(shuffled.length / groupSize);
             const remainder = shuffled.length % groupSize;
 
-            const assignments = shuffled.map((student, index) => {
-                let groupNumber;
-                // 앞 (totalGroups - remainder)개 조는 groupSize명
-                // 뒤 remainder개 조는 (groupSize + 1)명
-                const normalSlots = (totalGroups - remainder) * groupSize;
+            let totalGroups;
+            let assignments;
 
-                if (remainder > 0 && index < normalSlots) {
-                    // 앞 조들은 기본 인원
-                    groupNumber = Math.floor(index / groupSize) + 1;
-                } else if (remainder > 0) {
-                    // 뒤 조들은 1명씩 더 받음
-                    const adjustedIndex = index - normalSlots;
-                    groupNumber = (totalGroups - remainder) + Math.floor(adjustedIndex / (groupSize + 1)) + 1;
-                } else {
-                    // 나머지 없으면 균등 배분
-                    groupNumber = Math.floor(index / groupSize) + 1;
-                }
-
-                return {
+            if (remainder === 0) {
+                // 나누어 떨어지면 그대로
+                totalGroups = baseGroups;
+                assignments = shuffled.map((student, index) => ({
                     subject_id: currentSubjectId,
                     student_id: student.id,
-                    group_number: groupNumber
-                };
-            });
+                    group_number: Math.floor(index / groupSize) + 1
+                }));
+            } else if (remainder >= threshold) {
+                // 남은 인원이 기준 이상이면 새 조 생성
+                totalGroups = baseGroups + 1;
+                assignments = shuffled.map((student, index) => {
+                    let groupNumber;
+                    if (index < baseGroups * groupSize) {
+                        groupNumber = Math.floor(index / groupSize) + 1;
+                    } else {
+                        groupNumber = totalGroups; // 마지막 조
+                    }
+                    return {
+                        subject_id: currentSubjectId,
+                        student_id: student.id,
+                        group_number: groupNumber
+                    };
+                });
+            } else {
+                // 남은 인원이 기준 미만이면 기존 조에 고르게 분배
+                totalGroups = baseGroups === 0 ? 1 : baseGroups;
+                const studentsPerGroup = Math.floor(shuffled.length / totalGroups);
+                const extraStudents = shuffled.length % totalGroups;
+
+                // 앞 (totalGroups - extraStudents)개 조는 studentsPerGroup명
+                // 뒤 extraStudents개 조는 (studentsPerGroup + 1)명
+                const normalSlots = (totalGroups - extraStudents) * studentsPerGroup;
+
+                assignments = shuffled.map((student, index) => {
+                    let groupNumber;
+                    if (index < normalSlots) {
+                        groupNumber = Math.floor(index / studentsPerGroup) + 1;
+                    } else {
+                        const adjustedIndex = index - normalSlots;
+                        groupNumber = (totalGroups - extraStudents) + Math.floor(adjustedIndex / (studentsPerGroup + 1)) + 1;
+                    }
+                    return {
+                        subject_id: currentSubjectId,
+                        student_id: student.id,
+                        group_number: groupNumber
+                    };
+                });
+            }
 
             const { error } = await db
                 .from('group_assignments')

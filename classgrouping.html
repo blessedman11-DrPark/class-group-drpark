@@ -717,8 +717,9 @@
             const inputPassword = document.getElementById('subjectPasswordInput').value;
 
             if (inputPassword === (subject.password || '')) {
+                const subjectIdToSelect = pendingSubjectId; // 먼저 저장
                 hideSubjectPasswordModal();
-                await doSelectSubject(pendingSubjectId);
+                await doSelectSubject(subjectIdToSelect);
             } else {
                 document.getElementById('subjectPasswordError').textContent = '암호가 틀렸습니다.';
                 document.getElementById('subjectPasswordCancelBtn').style.display = 'none';
@@ -1029,21 +1030,24 @@
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
 
-            // 조 배정 (마지막 조가 부족하면 앞 조에 1명씩 분배, 각 조는 최대 1명만 더)
+            // 조 배정 (마지막 조가 부족하면 뒤에서 앞으로 1명씩 추가)
             let totalGroups = Math.floor(shuffled.length / groupSize);
             if (totalGroups === 0) totalGroups = 1;
             const remainder = shuffled.length % groupSize;
 
             const assignments = shuffled.map((student, index) => {
                 let groupNumber;
-                const extraSlots = remainder * (groupSize + 1);
+                // 앞 (totalGroups - remainder)개 조는 groupSize명
+                // 뒤 remainder개 조는 (groupSize + 1)명
+                const normalSlots = (totalGroups - remainder) * groupSize;
 
-                if (remainder > 0 && index < extraSlots) {
-                    // 앞 조들은 1명씩 더 받음
-                    groupNumber = Math.floor(index / (groupSize + 1)) + 1;
+                if (remainder > 0 && index < normalSlots) {
+                    // 앞 조들은 기본 인원
+                    groupNumber = Math.floor(index / groupSize) + 1;
                 } else if (remainder > 0) {
-                    // 나머지 조들은 기본 인원
-                    groupNumber = remainder + Math.floor((index - extraSlots) / groupSize) + 1;
+                    // 뒤 조들은 1명씩 더 받음
+                    const adjustedIndex = index - normalSlots;
+                    groupNumber = (totalGroups - remainder) + Math.floor(adjustedIndex / (groupSize + 1)) + 1;
                 } else {
                     // 나머지 없으면 균등 배분
                     groupNumber = Math.floor(index / groupSize) + 1;

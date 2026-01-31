@@ -233,6 +233,13 @@
             transform: rotateY(180deg);
         }
 
+        .card-back.group-1 { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .card-back.group-2 { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        .card-back.group-3 { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); }
+        .card-back.group-4 { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
+        .card-back.group-5 { background: linear-gradient(135deg, #f39c12 0%, #d68910 100%); }
+        .card-back.group-6 { background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); }
+
         /* 전체보기 버튼 */
         .view-all-btn {
             display: block;
@@ -671,7 +678,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.18)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.19)</p>
     </div>
 
     <script>
@@ -943,12 +950,13 @@
             container.innerHTML = students.map(student => {
                 const assignment = groupAssignments.find(a => a.student_id === student.id);
                 const groupNum = assignment ? assignment.group_number : '?';
+                const groupClass = assignment ? `group-${((assignment.group_number - 1) % 6) + 1}` : '';
 
                 return `
                     <div class="card" onclick="flipCard(this)">
                         <div class="card-inner">
                             <div class="card-front">${student.name}</div>
-                            <div class="card-back">${groupNum}조</div>
+                            <div class="card-back ${groupClass}">${groupNum}조</div>
                         </div>
                     </div>
                 `;

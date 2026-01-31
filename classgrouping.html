@@ -743,12 +743,12 @@
             <div class="rules-content">
                 <h3>1. 기본 원칙</h3>
                 <ul>
-                    <li>학생들은 <strong>무작위로 섞인 후</strong> 조에 배정됩니다.</li>
-                    <li>조당 인원수는 <strong>2명~10명</strong> 사이에서 설정할 수 있습니다.</li>
+                    <li>학생들은 <strong>무작위로 섞인 상태로</strong> 각 조에 배정됩니다.</li>
+                    <li>조당 인원수는 <strong>2명~10명</strong> 사이에서 설정됩니다.</li>
                 </ul>
 
                 <h3>2. 남은 인원 처리 기준</h3>
-                <p>조당 인원수로 나누고 남은 학생 수에 따라 다르게 처리됩니다:</p>
+                <p>조당 기준 인원수로 편성하고 남은 학생은 그 수에 따라 다르게 처리됩니다:</p>
                 <table class="rules-table">
                     <thead>
                         <tr>
@@ -758,10 +758,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>3명</td><td>2명 이상 남으면</td><td>1명 남으면</td></tr>
-                        <tr><td>4명</td><td>3명 이상 남으면</td><td>2명 이하 남으면</td></tr>
-                        <tr><td>5명</td><td>3명 이상 남으면</td><td>2명 이하 남으면</td></tr>
-                        <tr><td>6명</td><td>4명 이상 남으면</td><td>3명 이하 남으면</td></tr>
+                        <tr><td>3명</td><td>2명 이상 남았을 때</td><td>잔여 1명</td></tr>
+                        <tr><td>4명</td><td>3명 이상 남았을 때</td><td>잔여 2명 이하</td></tr>
+                        <tr><td>5명</td><td>3명 이상 남았을 때</td><td>잔여 2명 이하</td></tr>
+                        <tr><td>6명</td><td>4명 이상 남았을 때</td><td>잔여 3명 이하</td></tr>
                     </tbody>
                 </table>
 
@@ -774,11 +774,11 @@
                 <h3>4. 예시</h3>
                 <div class="rules-example">
                     <p><strong>예시 1:</strong> 23명, 3명씩 편성</p>
-                    <p>→ 23 ÷ 3 = 7조 + 2명 남음 → 2명 ≥ 2명(기준) → <strong>8개 조</strong> (3명×7조 + 2명×1조)</p>
+                    <p>→ 7개조 편성 후 2명 남음 → 2명은 새로운 조로 편성 → <strong>8개 조</strong> (7개조는 3명, 1개조는 2명)</p>
                 </div>
                 <div class="rules-example">
-                    <p><strong>예시 2:</strong> 10명, 4명씩 편성</p>
-                    <p>→ 10 ÷ 4 = 2조 + 2명 남음 → 2명 < 3명(기준) → <strong>2개 조</strong> (5명×2조로 분배)</p>
+                    <p><strong>예시 2:</strong> 9명, 4명씩 편성</p>
+                    <p>→ 2개조 편성 후 1명 남음 → 1명은 기존의 조에 편성 → <strong>2개 조</strong> (1개조는 4명, 1개조는 5명)</p>
                 </div>
             </div>
             <button class="show-all-groups-btn" onclick="hideRulesModal()" style="margin-top: 20px;">닫기</button>
@@ -787,7 +787,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.24)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.25)</p>
     </div>
 
     <script>

@@ -621,26 +621,14 @@
         }
 
         /* 교수님 암호 수정 스타일 */
-        .admin-password-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .password-input-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
         .password-input-wrapper {
             position: relative;
             display: inline-block;
         }
 
         .admin-pw-input {
-            width: 150px;
-            padding: 8px 35px 8px 10px;
+            width: 120px;
+            padding: 8px 30px 8px 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
@@ -648,11 +636,11 @@
 
         .password-toggle {
             position: absolute;
-            right: 8px;
+            right: 6px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             user-select: none;
         }
 
@@ -723,24 +711,18 @@
             </div>
 
             <div class="subject-edit-area">
-                <div class="subject-edit-header">
+                <div class="subject-edit-header" style="flex-wrap: wrap; gap: 10px;">
                     <h4>교수님 암호 수정</h4>
-                    <button class="admin-btn primary" onclick="saveAdminPasswords()">암호 저장</button>
-                </div>
-                <div class="admin-password-list">
-                    <div class="password-input-row">
-                        <span style="min-width: 60px;">암호 1:</span>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <div class="password-input-wrapper">
-                            <input type="password" id="adminPw1" class="admin-pw-input">
+                            <input type="password" id="adminPw1" class="admin-pw-input" placeholder="암호 1">
                             <span class="password-toggle" onclick="togglePasswordVisibility('adminPw1', this)">👁️</span>
                         </div>
-                    </div>
-                    <div class="password-input-row">
-                        <span style="min-width: 60px;">암호 2:</span>
                         <div class="password-input-wrapper">
-                            <input type="password" id="adminPw2" class="admin-pw-input">
+                            <input type="password" id="adminPw2" class="admin-pw-input" placeholder="암호 2">
                             <span class="password-toggle" onclick="togglePasswordVisibility('adminPw2', this)">👁️</span>
                         </div>
+                        <button class="admin-btn primary" onclick="saveAdminPasswords()">암호 저장</button>
                     </div>
                 </div>
             </div>
@@ -856,7 +838,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.26)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.27)</p>
     </div>
 
     <script>
@@ -872,14 +854,31 @@
         let students = [];
         let groupAssignments = [];
 
-        // 기본 교수님 암호 (localStorage에서 불러오거나 기본값 사용)
-        const DEFAULT_ADMIN_PASSWORDS = ['ingenium', 'p'];
-        let ADMIN_PASSWORDS = JSON.parse(localStorage.getItem('adminPasswords')) || [...DEFAULT_ADMIN_PASSWORDS];
+        // 교수님 암호 (Supabase에서 불러옴)
+        let ADMIN_PASSWORDS = ['ingenium', 'p']; // 기본값, 실제값은 loadAdminPasswords()에서 로드
 
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
             loadSubjects();
+            loadAdminPasswords();
         });
+
+        // 교수님 암호 로드
+        async function loadAdminPasswords() {
+            const { data, error } = await db
+                .from('admin_passwords')
+                .select('*')
+                .order('password_index');
+
+            if (error) {
+                console.error('암호 로드 에러:', error);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                ADMIN_PASSWORDS = data.map(d => d.password_value);
+            }
+        }
 
         // 과목 로드
         async function loadSubjects() {
@@ -1600,8 +1599,8 @@
             }
         }
 
-        // 교수님 암호 저장
-        function saveAdminPasswords() {
+        // 교수님 암호 저장 (Supabase)
+        async function saveAdminPasswords() {
             const pw1 = document.getElementById('adminPw1').value.trim();
             const pw2 = document.getElementById('adminPw2').value.trim();
 
@@ -1610,12 +1609,24 @@
                 return;
             }
 
-            const newPasswords = [];
-            if (pw1) newPasswords.push(pw1);
-            if (pw2) newPasswords.push(pw2);
+            // 암호 1 저장/업데이트
+            if (pw1) {
+                await db
+                    .from('admin_passwords')
+                    .upsert({ password_index: 1, password_value: pw1, updated_at: new Date().toISOString() }, { onConflict: 'password_index' });
+            }
 
-            ADMIN_PASSWORDS = newPasswords;
-            localStorage.setItem('adminPasswords', JSON.stringify(ADMIN_PASSWORDS));
+            // 암호 2 저장/업데이트
+            if (pw2) {
+                await db
+                    .from('admin_passwords')
+                    .upsert({ password_index: 2, password_value: pw2, updated_at: new Date().toISOString() }, { onConflict: 'password_index' });
+            }
+
+            // 로컬 변수 업데이트
+            ADMIN_PASSWORDS = [];
+            if (pw1) ADMIN_PASSWORDS.push(pw1);
+            if (pw2) ADMIN_PASSWORDS.push(pw2);
 
             alert('교수님 암호가 저장되었습니다.');
         }

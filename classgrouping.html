@@ -159,7 +159,7 @@
 
         .student-list-editor textarea {
             width: 100%;
-            height: 150px;
+            height: 100px;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 8px;
@@ -373,14 +373,17 @@
             width: 100%;
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
 
         .group-card-back li {
-            padding: 5px 10px;
-            font-size: 24px;
+            padding: 4px 8px;
+            font-size: 18px;
             background: rgba(255,255,255,0.2);
             border-radius: 5px;
+            width: calc(50% - 3px);
+            text-align: center;
+            box-sizing: border-box;
         }
 
         .group-card:nth-child(6n+1) .group-card-front,
@@ -616,6 +619,46 @@
         .rules-example p {
             margin: 5px 0;
         }
+
+        /* 교수님 암호 수정 스타일 */
+        .admin-password-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .password-input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .admin-pw-input {
+            width: 150px;
+            padding: 8px 35px 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+            user-select: none;
+        }
+
+        .password-toggle:hover {
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -655,7 +698,7 @@
             <div class="student-list-editor">
                 <h4>학생 명단 편집 <span id="currentSubjectName" style="color: #667eea;">(과목을 선택하세요)</span></h4>
                 <textarea id="studentListText" placeholder="예: 홍길동, 백두산, 금강산"></textarea>
-                <p class="editor-hint">* 학생 이름을 콤마(,)로 구분하여 입력 후 저장 버튼을 클릭하세요.</p>
+                <p class="editor-hint">* 학생 이름을 콤마(,)로 구분하여 (" "도 가능) 입력 후 저장 버튼을 클릭하세요.</p>
                 <button class="admin-btn primary" onclick="saveStudentList()" style="margin-top: 10px;">학생 명단 저장</button>
             </div>
 
@@ -676,6 +719,29 @@
                 </div>
                 <div id="subjectPasswordList">
                     <!-- 동적으로 생성됨 -->
+                </div>
+            </div>
+
+            <div class="subject-edit-area">
+                <div class="subject-edit-header">
+                    <h4>교수님 암호 수정</h4>
+                    <button class="admin-btn primary" onclick="saveAdminPasswords()">암호 저장</button>
+                </div>
+                <div class="admin-password-list">
+                    <div class="password-input-row">
+                        <span style="min-width: 60px;">암호 1:</span>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="adminPw1" class="admin-pw-input">
+                            <span class="password-toggle" onclick="togglePasswordVisibility('adminPw1', this)">👁️</span>
+                        </div>
+                    </div>
+                    <div class="password-input-row">
+                        <span style="min-width: 60px;">암호 2:</span>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="adminPw2" class="admin-pw-input">
+                            <span class="password-toggle" onclick="togglePasswordVisibility('adminPw2', this)">👁️</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -731,7 +797,10 @@
             <div class="group-list" id="groupList">
                 <!-- 동적으로 생성됨 -->
             </div>
-            <button class="show-all-groups-btn" onclick="showAllGroupsAtOnce()">조 전체보기</button>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="show-all-groups-btn" style="margin: 0;" onclick="showAllGroupsAtOnce()">조 전체보기</button>
+                <button class="show-all-groups-btn" style="margin: 0; background: #95a5a6;" onclick="hideGroupModal()">닫기</button>
+            </div>
         </div>
     </div>
 
@@ -787,7 +856,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.25)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.26)</p>
     </div>
 
     <script>
@@ -803,7 +872,9 @@
         let students = [];
         let groupAssignments = [];
 
-        const ADMIN_PASSWORDS = ['ingenium', 'p'];
+        // 기본 교수님 암호 (localStorage에서 불러오거나 기본값 사용)
+        const DEFAULT_ADMIN_PASSWORDS = ['ingenium', 'p'];
+        let ADMIN_PASSWORDS = JSON.parse(localStorage.getItem('adminPasswords')) || [...DEFAULT_ADMIN_PASSWORDS];
 
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
@@ -1134,6 +1205,10 @@
                     document.getElementById('studentListText').value =
                         students.map(s => s.name).join(', ');
                 }
+
+                // 교수님 암호 입력란에 현재 암호 표시
+                document.getElementById('adminPw1').value = ADMIN_PASSWORDS[0] || '';
+                document.getElementById('adminPw2').value = ADMIN_PASSWORDS[1] || '';
             } else {
                 document.getElementById('loginError').textContent = '암호가 틀렸습니다.';
                 document.getElementById('loginCancelBtn').style.display = 'none';
@@ -1512,6 +1587,38 @@
                 hideRulesModal();
             }
         });
+
+        // 암호 보이기/숨기기 토글
+        function togglePasswordVisibility(inputId, toggleElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggleElement.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                toggleElement.textContent = '👁️';
+            }
+        }
+
+        // 교수님 암호 저장
+        function saveAdminPasswords() {
+            const pw1 = document.getElementById('adminPw1').value.trim();
+            const pw2 = document.getElementById('adminPw2').value.trim();
+
+            if (!pw1 && !pw2) {
+                alert('최소 하나의 암호를 입력해주세요.');
+                return;
+            }
+
+            const newPasswords = [];
+            if (pw1) newPasswords.push(pw1);
+            if (pw2) newPasswords.push(pw2);
+
+            ADMIN_PASSWORDS = newPasswords;
+            localStorage.setItem('adminPasswords', JSON.stringify(ADMIN_PASSWORDS));
+
+            alert('교수님 암호가 저장되었습니다.');
+        }
     </script>
 </body>
 </html>

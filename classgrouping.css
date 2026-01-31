@@ -474,10 +474,10 @@ h1 {
 .guide-message {
     text-align: center;
     color: rgba(255,255,255,0.9);
-    font-size: 20px;
-    padding: 40px 20px;
+    font-size: 18px;
+    padding: 20px 15px;
     background: rgba(255,255,255,0.1);
-    border-radius: 15px;
+    border-radius: 10px;
     border: 2px dashed rgba(255,255,255,0.3);
     grid-column: 1 / -1;
     white-space: nowrap;
@@ -486,7 +486,8 @@ h1 {
 @media (max-width: 600px) {
     .guide-message {
         white-space: normal;
-        font-size: 18px;
+        font-size: 16px;
+        padding: 15px 10px;
     }
 }
 

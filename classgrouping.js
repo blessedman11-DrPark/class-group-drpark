@@ -18,6 +18,13 @@ let isShowingAll = false;
 let currentGroupMap = {};
 let pendingSubjectId = null;
 
+// HTML 이스케이프 함수 (XSS 방지)
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
     loadSubjects();
@@ -47,7 +54,7 @@ function renderSubjectButtons() {
     container.innerHTML = subjects.map(subject => `
         <button class="subject-btn ${currentSubjectId === subject.id ? 'active' : ''}"
                 onclick="selectSubject(${subject.id})">
-            ${subject.name}
+            ${escapeHtml(subject.name)}
         </button>
     `).join('');
 }
@@ -58,7 +65,7 @@ function renderSubjectEditList() {
     container.innerHTML = `
         <div class="subject-edit-row">
             ${subjects.map(subject => `
-                <input type="text" id="subject-name-${subject.id}" value="${subject.name}">
+                <input type="text" id="subject-name-${subject.id}" value="${escapeHtml(subject.name)}">
             `).join('')}
         </div>
     `;
@@ -71,8 +78,8 @@ function renderSubjectPasswordList() {
         <div class="subject-edit-row" style="flex-wrap: wrap;">
             ${subjects.map(subject => `
                 <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
-                    <span style="font-size: 14px; color: #333; min-width: 80px; font-weight: bold;">${subject.name}</span>
-                    <input type="text" id="subject-pw-${subject.id}" value="${subject.password || ''}" placeholder="암호" style="width: 100px;">
+                    <span style="font-size: 14px; color: #333; min-width: 80px; font-weight: bold;">${escapeHtml(subject.name)}</span>
+                    <input type="text" id="subject-pw-${subject.id}" value="${escapeHtml(subject.password || '')}" placeholder="암호" style="width: 100px;">
                 </div>
             `).join('')}
         </div>
@@ -103,7 +110,7 @@ function showSubjectPasswordModal(subjectId) {
     if (!subject) return;
 
     pendingSubjectId = subjectId;
-    document.getElementById('subjectPasswordTitle').textContent = `${subject.name} 암호 입력`;
+    document.getElementById('subjectPasswordTitle').textContent = `${escapeHtml(subject.name)} 암호 입력`;
     document.getElementById('subjectPasswordModal').classList.add('show');
     document.getElementById('subjectPasswordInput').focus();
     document.getElementById('subjectPasswordError').textContent = '';
@@ -165,7 +172,7 @@ async function doSelectSubject(subjectId) {
     // 현재 선택된 과목명 표시 및 조당 인원수 불러오기
     const selectedSubject = subjects.find(s => s.id === subjectId);
     if (selectedSubject) {
-        document.getElementById('currentSubjectName').textContent = `- ${selectedSubject.name}`;
+        document.getElementById('currentSubjectName').textContent = `- ${escapeHtml(selectedSubject.name)}`;
         document.getElementById('groupSize').value = selectedSubject.group_size || 4;
     }
 
@@ -295,7 +302,7 @@ function renderCards() {
         return `
             <div class="card" onclick="flipCard(this)">
                 <div class="card-inner">
-                    <div class="card-front">${student.name}</div>
+                    <div class="card-front">${escapeHtml(student.name)}</div>
                     <div class="card-back ${groupClass}">${groupNum}조</div>
                 </div>
             </div>
@@ -648,7 +655,7 @@ function showAllGroups() {
                     <div class="group-card-back">
                         <h4>${groupNum}조</h4>
                         <ul>
-                            ${currentGroupMap[groupNum].map(name => `<li>${name}</li>`).join('')}
+                            ${currentGroupMap[groupNum].map(name => `<li>${escapeHtml(name)}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
@@ -657,7 +664,7 @@ function showAllGroups() {
 
     // 모달 제목에 과목명 추가
     const selectedSubject = subjects.find(s => s.id === currentSubjectId);
-    const subjectName = selectedSubject ? selectedSubject.name : '';
+    const subjectName = selectedSubject ? escapeHtml(selectedSubject.name) : '';
     document.getElementById('groupModalTitle').textContent = `[${subjectName}] 조별 명단`;
 
     // 상태 초기화

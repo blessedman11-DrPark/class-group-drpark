@@ -668,7 +668,7 @@
     <div class="modal" id="groupModal">
         <div class="modal-content">
             <span class="modal-close" onclick="hideGroupModal()">&times;</span>
-            <h2>조별 명단</h2>
+            <h2 id="groupModalTitle">조별 명단</h2>
             <div class="group-list" id="groupList">
                 <!-- 동적으로 생성됨 -->
             </div>
@@ -678,7 +678,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.19)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.20)</p>
     </div>
 
     <script>
@@ -1221,6 +1221,11 @@
                         </div>
                     </div>
                 `).join('');
+
+            // 모달 제목에 과목명 추가
+            const selectedSubject = subjects.find(s => s.id === currentSubjectId);
+            const subjectName = selectedSubject ? selectedSubject.name : '';
+            document.getElementById('groupModalTitle').textContent = `[${subjectName}] 조별 명단`;
 
             document.getElementById('groupModal').classList.add('show');
         }

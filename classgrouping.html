@@ -590,7 +590,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by Claude Code, GitHub, <a href="https://supabase.com" target="_blank">Supabase</a>, Vercel</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.1)</p>
     </div>
 
     <script>
@@ -836,11 +836,12 @@
             const infoTitle = document.getElementById('infoTitle');
             const infoDetail = document.getElementById('infoDetail');
 
-            // 과목 정보 표시
+            // 과목 정보 표시 (실제 조편성 로직과 동일하게 계산)
             if (currentSubjectId && students.length > 0) {
                 const selectedSubject = subjects.find(s => s.id === currentSubjectId);
                 const groupSize = parseInt(document.getElementById('groupSize').value) || 4;
-                const totalGroups = Math.ceil(students.length / groupSize);
+                let totalGroups = Math.floor(students.length / groupSize);
+                if (totalGroups === 0) totalGroups = 1;
 
                 subjectInfo.style.display = 'block';
                 infoTitle.textContent = selectedSubject ? selectedSubject.name : '';

@@ -305,32 +305,106 @@
         }
 
         .group-card {
+            perspective: 1000px;
+            height: 150px;
+            cursor: pointer;
+        }
+
+        .group-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .group-card.flipped .group-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .group-card.show-all .group-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .group-card-front, .group-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
             border-radius: 12px;
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
+            font-weight: bold;
         }
 
-        .group-card:nth-child(6n+1) { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
-        .group-card:nth-child(6n+2) { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
-        .group-card:nth-child(6n+3) { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); }
-        .group-card:nth-child(6n+4) { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
-        .group-card:nth-child(6n+5) { background: linear-gradient(135deg, #f39c12 0%, #d68910 100%); }
-        .group-card:nth-child(6n+6) { background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); }
+        .group-card-front {
+            font-size: 36px;
+        }
 
-        .group-card h4 {
-            margin-bottom: 10px;
-            font-size: 22px;
+        .group-card-back {
+            transform: rotateY(180deg);
+            padding: 15px;
+            overflow-y: auto;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        .group-card-back h4 {
+            margin-bottom: 8px;
+            font-size: 18px;
             border-bottom: 2px solid rgba(255,255,255,0.3);
-            padding-bottom: 8px;
+            padding-bottom: 5px;
+            width: 100%;
         }
 
-        .group-card ul {
+        .group-card-back ul {
             list-style: none;
+            width: 100%;
         }
 
-        .group-card li {
-            padding: 10px 0;
-            font-size: 24px;
+        .group-card-back li {
+            padding: 4px 0;
+            font-size: 16px;
+        }
+
+        .group-card:nth-child(6n+1) .group-card-front,
+        .group-card:nth-child(6n+1) .group-card-back { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .group-card:nth-child(6n+2) .group-card-front,
+        .group-card:nth-child(6n+2) .group-card-back { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        .group-card:nth-child(6n+3) .group-card-front,
+        .group-card:nth-child(6n+3) .group-card-back { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); }
+        .group-card:nth-child(6n+4) .group-card-front,
+        .group-card:nth-child(6n+4) .group-card-back { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
+        .group-card:nth-child(6n+5) .group-card-front,
+        .group-card:nth-child(6n+5) .group-card-back { background: linear-gradient(135deg, #f39c12 0%, #d68910 100%); }
+        .group-card:nth-child(6n+6) .group-card-front,
+        .group-card:nth-child(6n+6) .group-card-back { background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); }
+
+        .show-all-groups-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .show-all-groups-btn:hover {
+            background: #5a6fd6;
+            transform: translateY(-2px);
+        }
+
+        .pending-status {
+            color: #f39c12;
+            font-weight: bold;
         }
 
         /* 로그인 모달 */
@@ -585,12 +659,13 @@
             <div class="group-list" id="groupList">
                 <!-- 동적으로 생성됨 -->
             </div>
+            <button class="show-all-groups-btn" onclick="showAllGroupsAtOnce()">조 전체보기</button>
         </div>
     </div>
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.15)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.16)</p>
     </div>
 
     <script>
@@ -843,9 +918,12 @@
                 let totalGroups = Math.floor(students.length / groupSize);
                 if (totalGroups === 0) totalGroups = 1;
 
+                const isPending = groupAssignments.length === 0;
+                const pendingText = isPending ? ' <span class="pending-status">(미편성, 대기중)</span>' : '';
+
                 subjectInfo.style.display = 'block';
                 infoTitle.textContent = selectedSubject ? selectedSubject.name : '';
-                infoDetail.innerHTML = `전체 <span>${students.length}명</span> / ${groupSize}명씩 <span>${totalGroups}개 조</span> 편성`;
+                infoDetail.innerHTML = `전체 <span>${students.length}명</span> / ${groupSize}명씩 <span>${totalGroups}개 조</span> 편성${pendingText}`;
             } else {
                 subjectInfo.style.display = 'none';
             }
@@ -1098,32 +1176,56 @@
         }
 
         // 전체보기 모달 표시
+        let currentGroupMap = {};
+
         function showAllGroups() {
-            const groupMap = {};
+            currentGroupMap = {};
 
             for (const assignment of groupAssignments) {
                 const student = students.find(s => s.id === assignment.student_id);
                 if (student) {
-                    if (!groupMap[assignment.group_number]) {
-                        groupMap[assignment.group_number] = [];
+                    if (!currentGroupMap[assignment.group_number]) {
+                        currentGroupMap[assignment.group_number] = [];
                     }
-                    groupMap[assignment.group_number].push(student.name);
+                    currentGroupMap[assignment.group_number].push(student.name);
                 }
             }
 
             const groupList = document.getElementById('groupList');
-            groupList.innerHTML = Object.keys(groupMap)
+            groupList.innerHTML = Object.keys(currentGroupMap)
                 .sort((a, b) => a - b)
                 .map(groupNum => `
-                    <div class="group-card">
-                        <h4>${groupNum}조</h4>
-                        <ul>
-                            ${groupMap[groupNum].map(name => `<li>${name}</li>`).join('')}
-                        </ul>
+                    <div class="group-card" onclick="flipGroupCard(this)">
+                        <div class="group-card-inner">
+                            <div class="group-card-front">${groupNum}조</div>
+                            <div class="group-card-back">
+                                <h4>${groupNum}조</h4>
+                                <ul>
+                                    ${currentGroupMap[groupNum].map(name => `<li>${name}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 `).join('');
 
             document.getElementById('groupModal').classList.add('show');
+        }
+
+        // 조 카드 뒤집기
+        function flipGroupCard(card) {
+            if (card.classList.contains('show-all')) return;
+            card.classList.add('flipped');
+            setTimeout(() => {
+                card.classList.remove('flipped');
+            }, 2000);
+        }
+
+        // 조 전체보기
+        function showAllGroupsAtOnce() {
+            const cards = document.querySelectorAll('#groupList .group-card');
+            cards.forEach(card => {
+                card.classList.toggle('show-all');
+            });
         }
 
         // 전체보기 모달 숨김

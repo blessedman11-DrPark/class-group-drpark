@@ -10,8 +10,8 @@ let subjects = [];
 let students = [];
 let groupAssignments = [];
 
-// 교수님 암호 (Supabase에서 불러옴)
-let ADMIN_PASSWORDS = ['ingenium', 'p']; // 기본값, 실제값은 loadAdminPasswords()에서 로드
+// 현재 로그인에 사용된 암호 (암호 수정 시 필요)
+let currentAdminPassword = null;
 
 // 조 전체보기 상태
 let isShowingAll = false;
@@ -21,25 +21,7 @@ let pendingSubjectId = null;
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
     loadSubjects();
-    loadAdminPasswords();
 });
-
-// 교수님 암호 로드
-async function loadAdminPasswords() {
-    const { data, error } = await db
-        .from('admin_passwords')
-        .select('*')
-        .order('password_index');
-
-    if (error) {
-        console.error('암호 로드 에러:', error);
-        return;
-    }
-
-    if (data && data.length > 0) {
-        ADMIN_PASSWORDS = data.map(d => d.password_value);
-    }
-}
 
 // 과목 로드
 async function loadSubjects() {
@@ -347,12 +329,24 @@ function hideLoginModal() {
     document.getElementById('loginCancelBtn').style.display = 'inline-block';
 }
 
-// 로그인
-function login() {
+// 로그인 (RPC 함수를 통한 서버 측 검증)
+async function login() {
     const password = document.getElementById('passwordInput').value;
 
-    if (ADMIN_PASSWORDS.includes(password)) {
+    // 서버에서 암호 검증 (RPC 함수 호출)
+    const { data, error } = await db.rpc('verify_admin_password', {
+        input_password: password
+    });
+
+    if (error) {
+        console.error('로그인 에러:', error);
+        document.getElementById('loginError').textContent = '서버 오류가 발생했습니다.';
+        return;
+    }
+
+    if (data === true) {
         isAdmin = true;
+        currentAdminPassword = password; // 암호 수정 시 사용
         hideLoginModal();
         document.getElementById('adminPanel').style.display = 'block';
         document.getElementById('adminLoginBtn').style.display = 'none';
@@ -364,9 +358,9 @@ function login() {
                 students.map(s => s.name).join(', ');
         }
 
-        // 교수님 암호 입력란에 현재 암호 표시
-        document.getElementById('adminPw1').value = ADMIN_PASSWORDS[0] || '';
-        document.getElementById('adminPw2').value = ADMIN_PASSWORDS[1] || '';
+        // 암호 입력란 초기화 (보안상 현재 암호 표시 안함)
+        document.getElementById('adminPw1').value = '';
+        document.getElementById('adminPw2').value = '';
     } else {
         document.getElementById('loginError').textContent = '암호가 틀렸습니다.';
         document.getElementById('loginCancelBtn').style.display = 'none';
@@ -707,7 +701,7 @@ function hideRulesModal() {
     document.getElementById('rulesModal').classList.remove('show');
 }
 
-// 교수님 암호 저장 (Supabase)
+// 교수님 암호 저장 (RPC 함수를 통한 서버 측 처리)
 async function saveAdminPasswords() {
     const pw1 = document.getElementById('adminPw1').value.trim();
     const pw2 = document.getElementById('adminPw2').value.trim();
@@ -717,23 +711,51 @@ async function saveAdminPasswords() {
         return;
     }
 
+    if (!currentAdminPassword) {
+        alert('현재 로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+        return;
+    }
+
+    let success = true;
+
+    // 암호 1 저장
     if (pw1) {
-        await db
-            .from('admin_passwords')
-            .upsert({ password_index: 1, password_value: pw1, updated_at: new Date().toISOString() }, { onConflict: 'password_index' });
+        const { data, error } = await db.rpc('update_admin_password', {
+            old_password: currentAdminPassword,
+            password_idx: 1,
+            new_password: pw1
+        });
+
+        if (error || data === false) {
+            console.error('암호1 저장 에러:', error);
+            success = false;
+        }
     }
 
+    // 암호 2 저장
     if (pw2) {
-        await db
-            .from('admin_passwords')
-            .upsert({ password_index: 2, password_value: pw2, updated_at: new Date().toISOString() }, { onConflict: 'password_index' });
+        const { data, error } = await db.rpc('update_admin_password', {
+            old_password: currentAdminPassword,
+            password_idx: 2,
+            new_password: pw2
+        });
+
+        if (error || data === false) {
+            console.error('암호2 저장 에러:', error);
+            success = false;
+        }
     }
 
-    ADMIN_PASSWORDS = [];
-    if (pw1) ADMIN_PASSWORDS.push(pw1);
-    if (pw2) ADMIN_PASSWORDS.push(pw2);
-
-    alert('교수님 암호가 저장되었습니다.');
+    if (success) {
+        // 새 암호로 현재 세션 업데이트
+        if (pw1) currentAdminPassword = pw1;
+        alert('교수님 암호가 저장되었습니다.');
+        // 입력란 초기화
+        document.getElementById('adminPw1').value = '';
+        document.getElementById('adminPw2').value = '';
+    } else {
+        alert('암호 저장 중 오류가 발생했습니다.');
+    }
 }
 
 // 모달 외부 클릭시 닫기 이벤트 등록

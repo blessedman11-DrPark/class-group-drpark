@@ -475,11 +475,13 @@ h1 {
     text-align: center;
     color: rgba(255,255,255,0.9);
     font-size: 18px;
-    padding: 20px 15px;
+    padding: 15px 25px;
     background: rgba(255,255,255,0.1);
     border-radius: 10px;
     border: 2px dashed rgba(255,255,255,0.3);
     grid-column: 1 / -1;
+    justify-self: center;
+    width: fit-content;
     white-space: nowrap;
 }
 
@@ -487,7 +489,9 @@ h1 {
     .guide-message {
         white-space: normal;
         font-size: 16px;
-        padding: 15px 10px;
+        padding: 12px 15px;
+        width: auto;
+        justify-self: stretch;
     }
 }
 

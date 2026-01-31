@@ -560,6 +560,62 @@
         .footer a:hover {
             text-decoration: underline;
         }
+
+        /* 조편성 원칙 모달 스타일 */
+        .rules-content h3 {
+            color: #333;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .rules-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .rules-content li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .rules-content p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .rules-table th, .rules-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .rules-table th {
+            background: #667eea;
+            color: white;
+        }
+
+        .rules-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .rules-example {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rules-example p {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -573,6 +629,9 @@
                 </button>
                 <button class="admin-btn" id="adminLogoutBtn" style="display: none; background: #3498db;" onclick="goHome()">
                     홈페이지
+                </button>
+                <button class="admin-btn" style="background: #9b59b6; margin-top: 5px;" onclick="showRulesModal()">
+                    조편성 원칙
                 </button>
             </div>
         </div>
@@ -676,9 +735,58 @@
         </div>
     </div>
 
+    <!-- 조편성 원칙 모달 -->
+    <div class="modal" id="rulesModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close" onclick="hideRulesModal()">&times;</span>
+            <h2 style="color: #667eea; margin-bottom: 20px;">조편성 원칙</h2>
+            <div class="rules-content">
+                <h3>1. 기본 원칙</h3>
+                <ul>
+                    <li>학생들은 <strong>무작위로 섞인 후</strong> 조에 배정됩니다.</li>
+                    <li>조당 인원수는 <strong>2명~10명</strong> 사이에서 설정할 수 있습니다.</li>
+                </ul>
+
+                <h3>2. 남은 인원 처리 기준</h3>
+                <p>조당 인원수로 나누고 남은 학생 수에 따라 다르게 처리됩니다:</p>
+                <table class="rules-table">
+                    <thead>
+                        <tr>
+                            <th>조당 인원</th>
+                            <th>새 조 생성 기준</th>
+                            <th>기존 조 분배 기준</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>3명</td><td>2명 이상 남으면</td><td>1명 남으면</td></tr>
+                        <tr><td>4명</td><td>3명 이상 남으면</td><td>2명 이하 남으면</td></tr>
+                        <tr><td>5명</td><td>3명 이상 남으면</td><td>2명 이하 남으면</td></tr>
+                        <tr><td>6명</td><td>4명 이상 남으면</td><td>3명 이하 남으면</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>3. 분배 방식</h3>
+                <ul>
+                    <li><strong>새 조 생성:</strong> 남은 인원이 기준 이상이면 별도의 조로 편성</li>
+                    <li><strong>기존 조 분배:</strong> 남은 인원이 기준 미만이면 기존 조들에 고르게 분배</li>
+                </ul>
+
+                <h3>4. 예시</h3>
+                <div class="rules-example">
+                    <p><strong>예시 1:</strong> 23명, 3명씩 편성</p>
+                    <p>→ 23 ÷ 3 = 7조 + 2명 남음 → 2명 ≥ 2명(기준) → <strong>8개 조</strong> (3명×7조 + 2명×1조)</p>
+                </div>
+                <div class="rules-example">
+                    <p><strong>예시 2:</strong> 10명, 4명씩 편성</p>
+                    <p>→ 10 ÷ 4 = 2조 + 2명 남음 → 2명 < 3명(기준) → <strong>2개 조</strong> (5명×2조로 분배)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.22)</p>
+        <p>Made by Dr.Park with AI tools | Powered by <a href="https://claude.ai/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v.23)</p>
     </div>
 
     <script>
@@ -1364,6 +1472,23 @@
         document.getElementById('subjectPasswordModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 hideSubjectPasswordModal();
+            }
+        });
+
+        // 조편성 원칙 모달 표시
+        function showRulesModal() {
+            document.getElementById('rulesModal').classList.add('show');
+        }
+
+        // 조편성 원칙 모달 숨김
+        function hideRulesModal() {
+            document.getElementById('rulesModal').classList.remove('show');
+        }
+
+        // 조편성 원칙 모달 외부 클릭시 닫기
+        document.getElementById('rulesModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideRulesModal();
             }
         });
     </script>

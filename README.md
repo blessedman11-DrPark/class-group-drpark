@@ -99,6 +99,7 @@ https://class-group-drpark.vercel.app/
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
+| v2.04 | 2026-02-01 | 조편성 원칙 버튼 글자색 수정, 푸터 문구 변경 |
 | v2.03 | 2026-02-01 | 모바일 헤더 반응형 UI 개선 |
 | v2.02 | 2026-02-01 | GitHub-Vercel 자동 배포 테스트 |
 | v2.01 | 2026-02-01 | 버전 번호 체계 변경 (v2.xx 형식) |
@@ -114,4 +115,4 @@ https://class-group-drpark.vercel.app/
 
 ## 라이선스
 
-Made by Dr.Park with AI tools
+Made by Prof. Park with AI tools

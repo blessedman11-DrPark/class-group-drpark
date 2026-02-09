@@ -86,20 +86,30 @@ function renderSubjectPasswordList() {
     `;
 }
 
-// 과목별 암호 저장
+// 과목별 암호 저장 (RPC 함수를 통한 서버 측 처리)
 async function saveSubjectPasswords() {
-    for (const subject of subjects) {
-        const input = document.getElementById(`subject-pw-${subject.id}`);
-        if (input) {
-            const newPassword = input.value.trim();
-            if (newPassword !== (subject.password || '')) {
-                await db
-                    .from('subjects')
-                    .update({ password: newPassword })
-                    .eq('id', subject.id);
-                subject.password = newPassword;
-            }
-        }
+    const ids = subjects.map(s => s.id);
+    const passwords = subjects.map(s => {
+        const input = document.getElementById(`subject-pw-${s.id}`);
+        return input ? input.value.trim() : (s.password || '');
+    });
+
+    const { data, error } = await db.rpc('admin_save_subject_passwords', {
+        admin_pw: currentAdminPassword,
+        p_ids: ids,
+        p_passwords: passwords
+    });
+
+    if (error || data === false) {
+        console.error('암호 저장 에러:', error);
+        alert('암호 저장 중 오류가 발생했습니다.');
+        return;
+    }
+
+    // 로컬 데이터 업데이트
+    for (let i = 0; i < ids.length; i++) {
+        const subject = subjects.find(s => s.id === ids[i]);
+        if (subject) subject.password = passwords[i];
     }
     alert('과목별 암호가 저장되었습니다.');
 }
@@ -181,17 +191,23 @@ async function doSelectSubject(subjectId) {
     renderCards();
 }
 
-// 조당 인원수 저장
+// 조당 인원수 저장 (RPC 함수를 통한 서버 측 처리)
 async function saveGroupSize() {
     if (!currentSubjectId) return;
 
     const groupSize = parseInt(document.getElementById('groupSize').value);
     if (groupSize < 2 || groupSize > 10) return;
 
-    await db
-        .from('subjects')
-        .update({ group_size: groupSize })
-        .eq('id', currentSubjectId);
+    const { data, error } = await db.rpc('admin_save_group_size', {
+        admin_pw: currentAdminPassword,
+        p_subject_id: currentSubjectId,
+        p_group_size: groupSize
+    });
+
+    if (error || data === false) {
+        console.error('조당 인원수 저장 에러:', error);
+        return;
+    }
 
     // 로컬 데이터 업데이트
     const subject = subjects.find(s => s.id === currentSubjectId);
@@ -389,7 +405,7 @@ function goHome() {
     window.location.reload();
 }
 
-// 학생 명단 저장
+// 학생 명단 저장 (RPC 함수를 통한 서버 측 처리)
 async function saveStudentList() {
     if (!currentSubjectId) {
         alert('먼저 과목을 선택해주세요.');
@@ -406,28 +422,13 @@ async function saveStudentList() {
         return;
     }
 
-    // 기존 학생 삭제
-    await db
-        .from('group_assignments')
-        .delete()
-        .eq('subject_id', currentSubjectId);
+    const { data, error } = await db.rpc('admin_save_students', {
+        admin_pw: currentAdminPassword,
+        p_subject_id: currentSubjectId,
+        p_names: names
+    });
 
-    await db
-        .from('students')
-        .delete()
-        .eq('subject_id', currentSubjectId);
-
-    // 새 학생 추가
-    const newStudents = names.map(name => ({
-        subject_id: currentSubjectId,
-        name: name
-    }));
-
-    const { error } = await db
-        .from('students')
-        .insert(newStudents);
-
-    if (error) {
+    if (error || data === false) {
         console.error('학생 저장 에러:', error);
         alert('저장 중 오류가 발생했습니다.');
         return;
@@ -439,16 +440,24 @@ async function saveStudentList() {
     renderCards();
 }
 
-// 과목명 저장
+// 과목명 저장 (RPC 함수를 통한 서버 측 처리)
 async function saveSubjectNames() {
-    for (const subject of subjects) {
-        const input = document.getElementById(`subject-name-${subject.id}`);
-        if (input && input.value !== subject.name) {
-            await db
-                .from('subjects')
-                .update({ name: input.value })
-                .eq('id', subject.id);
-        }
+    const ids = subjects.map(s => s.id);
+    const names = subjects.map(s => {
+        const input = document.getElementById(`subject-name-${s.id}`);
+        return input ? input.value : s.name;
+    });
+
+    const { data, error } = await db.rpc('admin_save_subject_names', {
+        admin_pw: currentAdminPassword,
+        p_ids: ids,
+        p_names: names
+    });
+
+    if (error || data === false) {
+        console.error('과목명 저장 에러:', error);
+        alert('과목명 저장 중 오류가 발생했습니다.');
+        return;
     }
 
     alert('과목명이 저장되었습니다.');
@@ -530,12 +539,6 @@ async function assignGroups() {
         return;
     }
 
-    // 기존 조편성 삭제
-    await db
-        .from('group_assignments')
-        .delete()
-        .eq('subject_id', currentSubjectId);
-
     // 학생 섞기 (Fisher-Yates 알고리즘)
     const shuffled = [...students];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -554,7 +557,6 @@ async function assignGroups() {
     if (remainder === 0) {
         totalGroups = baseGroups;
         assignments = shuffled.map((student, index) => ({
-            subject_id: currentSubjectId,
             student_id: student.id,
             group_number: Math.floor(index / groupSize) + 1
         }));
@@ -567,11 +569,7 @@ async function assignGroups() {
             } else {
                 groupNumber = totalGroups;
             }
-            return {
-                subject_id: currentSubjectId,
-                student_id: student.id,
-                group_number: groupNumber
-            };
+            return { student_id: student.id, group_number: groupNumber };
         });
     } else {
         totalGroups = baseGroups === 0 ? 1 : baseGroups;
@@ -587,19 +585,22 @@ async function assignGroups() {
                 const adjustedIndex = index - normalSlots;
                 groupNumber = (totalGroups - extraStudents) + Math.floor(adjustedIndex / (studentsPerGroup + 1)) + 1;
             }
-            return {
-                subject_id: currentSubjectId,
-                student_id: student.id,
-                group_number: groupNumber
-            };
+            return { student_id: student.id, group_number: groupNumber };
         });
     }
 
-    const { error } = await db
-        .from('group_assignments')
-        .insert(assignments);
+    // RPC 함수를 통한 서버 측 처리
+    const studentIds = assignments.map(a => a.student_id);
+    const groupNumbers = assignments.map(a => a.group_number);
 
-    if (error) {
+    const { data, error } = await db.rpc('admin_assign_groups', {
+        admin_pw: currentAdminPassword,
+        p_subject_id: currentSubjectId,
+        p_student_ids: studentIds,
+        p_group_numbers: groupNumbers
+    });
+
+    if (error || data === false) {
         console.error('조편성 에러:', error);
         alert('조편성 중 오류가 발생했습니다.');
         return;
@@ -621,10 +622,16 @@ async function resetGroups() {
         return;
     }
 
-    await db
-        .from('group_assignments')
-        .delete()
-        .eq('subject_id', currentSubjectId);
+    const { data, error } = await db.rpc('admin_reset_groups', {
+        admin_pw: currentAdminPassword,
+        p_subject_id: currentSubjectId
+    });
+
+    if (error || data === false) {
+        console.error('조편성 초기화 에러:', error);
+        alert('조편성 초기화 중 오류가 발생했습니다.');
+        return;
+    }
 
     alert('조편성이 초기화되었습니다.');
     await loadGroupAssignments();

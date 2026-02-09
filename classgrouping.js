@@ -708,6 +708,16 @@ function hideRulesModal() {
     document.getElementById('rulesModal').classList.remove('show');
 }
 
+// 설정 모달 표시
+function showSettingsModal() {
+    document.getElementById('settingsModal').classList.add('show');
+}
+
+// 설정 모달 숨김
+function hideSettingsModal() {
+    document.getElementById('settingsModal').classList.remove('show');
+}
+
 // 교수님 암호 저장 (RPC 함수를 통한 서버 측 처리)
 async function saveAdminPasswords() {
     const pw1 = document.getElementById('adminPw1').value.trim();
@@ -787,5 +797,11 @@ document.getElementById('subjectPasswordModal').addEventListener('click', functi
 document.getElementById('rulesModal').addEventListener('click', function(e) {
     if (e.target === this) {
         hideRulesModal();
+    }
+});
+
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideSettingsModal();
     }
 });

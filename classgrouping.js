@@ -633,7 +633,6 @@ async function resetGroups() {
         return;
     }
 
-    alert('조편성이 초기화되었습니다.');
     await loadGroupAssignments();
     renderCards();
 }

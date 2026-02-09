@@ -493,6 +493,32 @@ h1 {
         width: auto;
         justify-self: stretch;
     }
+
+    /* 헤더 모바일 대응 */
+    .header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    h1 {
+        font-size: 1.3rem;
+    }
+
+    .header-login {
+        position: static;
+        transform: none;
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .header-login .admin-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        margin-top: 0 !important;
+    }
 }
 
 /* 과목명 수정 */

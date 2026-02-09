@@ -99,6 +99,12 @@ https://class-group-drpark.vercel.app/
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
+| v2.06 | 2026-02-01 | Claude Code 하이퍼링크 수정 |
+| v2.05 | 2026-02-01 | textContent 이중 이스케이프 버그 수정 |
+| v2.04 | 2026-02-01 | 조편성 원칙 버튼 글자색 수정, 푸터 문구 변경 |
+| v2.03 | 2026-02-01 | 모바일 헤더 반응형 UI 개선 |
+| v2.02 | 2026-02-01 | GitHub-Vercel 자동 배포 테스트 |
+| v2.01 | 2026-02-01 | 버전 번호 체계 변경 (v2.xx 형식) |
 | v.33 | 2026-01-31 | 안내 메시지 테두리 문구 길이에 맞게 조정 |
 | v.32 | 2026-01-31 | XSS 취약점 수정 (escapeHtml 함수 적용) |
 | v.31 | 2026-01-31 | UI 개선 (안내 메시지, 조별 명단 스타일) |
@@ -111,4 +117,4 @@ https://class-group-drpark.vercel.app/
 
 ## 라이선스
 
-Made by Dr.Park with AI tools
+Made by Prof. Park with AI tools

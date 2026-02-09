@@ -110,7 +110,7 @@ function showSubjectPasswordModal(subjectId) {
     if (!subject) return;
 
     pendingSubjectId = subjectId;
-    document.getElementById('subjectPasswordTitle').textContent = `${escapeHtml(subject.name)} 암호 입력`;
+    document.getElementById('subjectPasswordTitle').textContent = `${subject.name} 암호 입력`;
     document.getElementById('subjectPasswordModal').classList.add('show');
     document.getElementById('subjectPasswordInput').focus();
     document.getElementById('subjectPasswordError').textContent = '';
@@ -172,7 +172,7 @@ async function doSelectSubject(subjectId) {
     // 현재 선택된 과목명 표시 및 조당 인원수 불러오기
     const selectedSubject = subjects.find(s => s.id === subjectId);
     if (selectedSubject) {
-        document.getElementById('currentSubjectName').textContent = `- ${escapeHtml(selectedSubject.name)}`;
+        document.getElementById('currentSubjectName').textContent = `- ${selectedSubject.name}`;
         document.getElementById('groupSize').value = selectedSubject.group_size || 4;
     }
 

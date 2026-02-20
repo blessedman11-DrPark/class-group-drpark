@@ -454,6 +454,12 @@ h1 {
     width: 200px;
 }
 
+/* 모바일 브라우저(Edge/IE)의 비밀번호 공개 버튼 숨김 */
+.login-box input[type="password"]::-ms-reveal,
+.login-box input[type="password"]::-ms-clear {
+    display: none;
+}
+
 .login-box button {
     padding: 12px 30px;
     background: #667eea;

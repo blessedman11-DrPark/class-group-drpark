@@ -72,7 +72,7 @@
     <div class="login-modal" id="loginModal">
         <div class="login-box">
             <h3>교수님 인증</h3>
-            <input type="password" id="passwordInput" placeholder="암호를 입력하세요" onkeypress="if(event.key==='Enter') login()">
+            <input type="password" id="passwordInput" placeholder="암호를 입력하세요" autocomplete="current-password" onkeypress="if(event.key==='Enter') login()">
             <br>
             <button onclick="login()">확인</button>
             <button id="loginCancelBtn" onclick="hideLoginModal()" style="background: #95a5a6; margin-left: 10px;">취소</button>
@@ -202,7 +202,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Prof. Park with AI tools | Powered by <a href="https://www.anthropic.com/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v2.10)</p>
+        <p>Made by Prof. Park with AI tools | Powered by <a href="https://www.anthropic.com/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v2.11)</p>
     </div>
 
     <script src="classgrouping.js"></script>

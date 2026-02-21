@@ -126,9 +126,24 @@ function showSubjectPasswordModal(subjectId) {
     document.getElementById('subjectPasswordError').textContent = '';
 }
 
+function toggleSubjectPwVisibility(btn) {
+    const input = document.getElementById('subjectPasswordInput');
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁';
+    }
+}
+
 function hideSubjectPasswordModal() {
     document.getElementById('subjectPasswordModal').classList.remove('show');
-    document.getElementById('subjectPasswordInput').value = '';
+    const input = document.getElementById('subjectPasswordInput');
+    input.value = '';
+    input.type = 'password';
+    const toggleBtn = document.querySelector('#subjectPasswordModal .pw-toggle-btn');
+    if (toggleBtn) toggleBtn.textContent = '👁';
     document.getElementById('subjectPasswordError').textContent = '';
     document.getElementById('subjectPasswordRetryBtn').style.display = 'none';
     document.getElementById('subjectPasswordCancelBtn').style.display = 'inline-block';

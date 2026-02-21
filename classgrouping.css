@@ -460,6 +460,35 @@ h1 {
     display: none;
 }
 
+/* 암호 입력 + 눈 아이콘 래퍼 */
+.pw-input-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.pw-input-wrap input {
+    margin-bottom: 0;
+    padding-right: 44px;
+    width: 200px;
+}
+
+.pw-toggle-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none !important;
+    border: none !important;
+    padding: 4px 6px !important;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    color: #888;
+    box-shadow: none !important;
+    min-width: unset;
+}
+
 .login-box button {
     padding: 12px 30px;
     background: #667eea;

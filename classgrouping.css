@@ -223,6 +223,19 @@ h1 {
     color: white;
     font-size: 24px;
     transform: rotateY(180deg);
+    flex-direction: column;
+    gap: 3px;
+}
+
+.group-num-text {
+    line-height: 1;
+}
+
+.group-alpha-label {
+    font-size: 0.55em;
+    font-weight: normal;
+    opacity: 0.88;
+    line-height: 1;
 }
 
 .card-back.group-1 { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
@@ -341,6 +354,8 @@ h1 {
 
 .group-card-front {
     font-size: 36px;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .group-card-back {
@@ -358,6 +373,12 @@ h1 {
     border-bottom: 2px solid rgba(255,255,255,0.3);
     padding-bottom: 8px;
     width: 100%;
+}
+
+.group-alpha-label-back {
+    font-size: 14px;
+    font-weight: normal;
+    opacity: 0.88;
 }
 
 .group-card-back ul {

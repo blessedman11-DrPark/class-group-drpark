@@ -25,6 +25,12 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// 조 번호를 알파벳으로 변환 (1→A, 2→B, ...)
+function getAlphaLabel(groupNum) {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    return letters[(groupNum - 1) % 26];
+}
+
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
     loadSubjects();
@@ -334,7 +340,10 @@ function renderCards() {
             <div class="card" onclick="flipCard(this)">
                 <div class="card-inner">
                     <div class="card-front">${escapeHtml(student.name)}</div>
-                    <div class="card-back ${groupClass}">${groupNum}조</div>
+                    <div class="card-back ${groupClass}">
+                        <span class="group-num-text">${groupNum}조</span>
+                        ${assignment ? `<span class="group-alpha-label">(${getAlphaLabel(assignment.group_number)}조)</span>` : ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -672,9 +681,12 @@ function showAllGroups() {
         .map(groupNum => `
             <div class="group-card" onclick="flipGroupCard(this)">
                 <div class="group-card-inner">
-                    <div class="group-card-front">${groupNum}조</div>
+                    <div class="group-card-front">
+                        <span class="group-num-text">${groupNum}조</span>
+                        <span class="group-alpha-label">(${getAlphaLabel(parseInt(groupNum))}조)</span>
+                    </div>
                     <div class="group-card-back">
-                        <h4>${groupNum}조</h4>
+                        <h4>${groupNum}조 <span class="group-alpha-label-back">(${getAlphaLabel(parseInt(groupNum))}조)</span></h4>
                         <ul>
                             ${currentGroupMap[groupNum].map(name => `<li>${escapeHtml(name)}</li>`).join('')}
                         </ul>

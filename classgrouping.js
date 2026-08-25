@@ -25,6 +25,13 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// 입력 텍스트에서 학생 이름 목록 추출 (콤마/줄바꿈 구분, 따옴표 제거)
+function parseStudentNames(text) {
+    return text.split(/[,\n]/)
+        .map(name => name.trim().replace(/^["']|["']$/g, '').trim())
+        .filter(name => name.length > 0);
+}
+
 // 조 번호를 알파벳으로 변환 (1→A, 2→B, ...)
 function getAlphaLabel(groupNum) {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -436,10 +443,7 @@ async function saveStudentList() {
         return;
     }
 
-    const text = document.getElementById('studentListText').value;
-    const names = text.split(',')
-        .map(name => name.trim().replace(/^["']|["']$/g, '').trim())
-        .filter(name => name.length > 0);
+    const names = parseStudentNames(document.getElementById('studentListText').value);
 
     if (names.length === 0) {
         alert('학생 이름을 입력해주세요.');
@@ -808,6 +812,161 @@ async function saveAdminPasswords() {
     }
 }
 
+// ===== 자리배치 =====
+
+// 자리배치 데이터는 과목별로 브라우저(localStorage)에 저장
+function seatingKey(kind) {
+    return `seating.${kind}.${currentSubjectId || 'default'}`;
+}
+
+function loadSeatingNames() {
+    const saved = localStorage.getItem(seatingKey('names'));
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            console.error('자리배치 명단 파싱 에러:', e);
+        }
+    }
+    // 저장된 명단이 없으면 과목의 학생 명단을 사용
+    return students.map(s => s.name);
+}
+
+function loadSeatingResult() {
+    const saved = localStorage.getItem(seatingKey('result'));
+    if (!saved) return null;
+    try {
+        return JSON.parse(saved);
+    } catch (e) {
+        console.error('자리배치 결과 파싱 에러:', e);
+        return null;
+    }
+}
+
+// 자리배치 모달 표시
+function showSeatingModal() {
+    const selectedSubject = subjects.find(s => s.id === currentSubjectId);
+    document.getElementById('seatingSubjectName').textContent =
+        selectedSubject ? `- ${selectedSubject.name}` : '(과목을 선택하면 해당 과목의 명단이 표시됩니다)';
+
+    document.getElementById('seatingStudentText').value = loadSeatingNames().join(', ');
+
+    const savedRows = parseInt(localStorage.getItem(seatingKey('rows')));
+    document.getElementById('seatRows').value = savedRows > 0 ? savedRows : 4;
+
+    renderSeating();
+    document.getElementById('seatingModal').classList.add('show');
+}
+
+function hideSeatingModal() {
+    document.getElementById('seatingModal').classList.remove('show');
+}
+
+// 자리배치 학생 명단 저장
+function saveSeatingStudents() {
+    const names = parseStudentNames(document.getElementById('seatingStudentText').value);
+
+    if (names.length === 0) {
+        alert('학생 이름을 입력해주세요.');
+        return;
+    }
+
+    localStorage.setItem(seatingKey('names'), JSON.stringify(names));
+    alert(`학생 명단이 저장되었습니다. (총 ${names.length}명)`);
+}
+
+// 자리배치 실행
+function runSeating() {
+    const names = parseStudentNames(document.getElementById('seatingStudentText').value);
+
+    if (names.length === 0) {
+        alert('학생 이름을 입력해주세요.');
+        return;
+    }
+
+    const rows = parseInt(document.getElementById('seatRows').value);
+    if (!rows || rows < 1 || rows > 20) {
+        alert('줄 수는 1~20 사이로 설정해주세요.');
+        return;
+    }
+
+    if (rows > names.length) {
+        alert('줄 수가 학생 수보다 많습니다. 줄 수를 줄여주세요.');
+        return;
+    }
+
+    // 학생 섞기 (Fisher-Yates 알고리즘)
+    const shuffled = [...names];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // 1번부터 마지막 번호까지 자리 번호 부여
+    const seats = shuffled.map((name, index) => ({ seat: index + 1, name }));
+
+    // 입력한 명단과 줄 수를 함께 저장
+    localStorage.setItem(seatingKey('names'), JSON.stringify(names));
+    localStorage.setItem(seatingKey('rows'), String(rows));
+    localStorage.setItem(seatingKey('result'), JSON.stringify({ rows, seats }));
+
+    renderSeating();
+}
+
+// 자리배치 초기화
+function resetSeating() {
+    if (!confirm('자리배치를 초기화하시겠습니까?')) return;
+
+    localStorage.removeItem(seatingKey('result'));
+    renderSeating();
+}
+
+// 줄 수에 맞춰 자리를 나누기 (앞줄부터 고르게 배분)
+function splitSeatsIntoRows(seats, rows) {
+    const baseCount = Math.floor(seats.length / rows);
+    const extra = seats.length % rows;
+
+    const result = [];
+    let index = 0;
+    for (let i = 0; i < rows; i++) {
+        const count = baseCount + (i < extra ? 1 : 0);
+        result.push(seats.slice(index, index + count));
+        index += count;
+    }
+    return result;
+}
+
+// 자리배치 결과 렌더링
+function renderSeating() {
+    const container = document.getElementById('seatingResult');
+    const result = loadSeatingResult();
+
+    if (!result || !result.seats || result.seats.length === 0) {
+        container.innerHTML = '<p class="seating-guide">줄 수를 정하고 [자리배치 실행]을 누르세요.</p>';
+        return;
+    }
+
+    const rowsOfSeats = splitSeatsIntoRows(result.seats, result.rows);
+
+    container.innerHTML = `
+        <div class="seating-info">전체 <span>${result.seats.length}명</span> / <span>${result.rows}줄</span> 배치</div>
+        <div class="seating-board">칠판 (앞)</div>
+        ${rowsOfSeats.map((rowSeats, rowIndex) => `
+            <div class="seat-row">
+                <div class="seat-row-label">${rowIndex + 1}줄</div>
+                <div class="seat-row-seats">
+                    ${rowSeats.map(item => `
+                        <div class="seat">
+                            <div class="seat-num">${item.seat}</div>
+                            <div class="seat-name">${escapeHtml(item.name)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('')}
+    `;
+}
+
 // 모달 외부 클릭시 닫기 이벤트 등록
 document.getElementById('groupModal').addEventListener('click', function(e) {
     if (e.target === this) {
@@ -836,5 +995,11 @@ document.getElementById('rulesModal').addEventListener('click', function(e) {
 document.getElementById('settingsModal').addEventListener('click', function(e) {
     if (e.target === this) {
         hideSettingsModal();
+    }
+});
+
+document.getElementById('seatingModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideSeatingModal();
     }
 });

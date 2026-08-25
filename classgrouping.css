@@ -711,7 +711,28 @@ h1 {
     margin: 5px 0;
 }
 
-/* 자리배치 모달 스타일 */
+/* 자리배치 패널 (메인 화면에 표시) */
+.seating-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.seating-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.seating-panel-header h3 {
+    margin: 0;
+    color: #333;
+}
+
 .seating-controls {
     display: flex;
     gap: 10px;
@@ -814,9 +835,9 @@ h1 {
 }
 
 .seat {
-    width: 115px;
-    min-height: 88px;
-    padding: 10px 8px;
+    width: 150px;
+    min-height: 118px;
+    padding: 12px 10px;
     border-radius: 12px;
     color: white;
     text-align: center;
@@ -825,18 +846,18 @@ h1 {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .seat-num {
-    font-size: 15px;
+    font-size: 30px;
     font-weight: normal;
     line-height: 1;
     opacity: 0.85;
 }
 
 .seat-name {
-    font-size: 24px;
+    font-size: 34px;
     font-weight: bold;
     line-height: 1.15;
     word-break: keep-all;
@@ -872,16 +893,16 @@ h1 {
     }
 
     .seat {
-        width: 92px;
-        min-height: 72px;
+        width: 105px;
+        min-height: 88px;
     }
 
     .seat-num {
-        font-size: 13px;
+        font-size: 22px;
     }
 
     .seat-name {
-        font-size: 19px;
+        font-size: 24px;
     }
 }
 

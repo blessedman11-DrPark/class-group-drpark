@@ -217,6 +217,11 @@ async function doSelectSubject(subjectId) {
     await loadStudents();
     await loadGroupAssignments();
     renderCards();
+
+    // 자리배치 패널이 열려 있으면 새로 선택한 과목 기준으로 갱신
+    if (isSeatingPanelOpen()) {
+        await openSeatingPanel(false);
+    }
 }
 
 // 조당 인원수 저장 (RPC 함수를 통한 서버 측 처리)
@@ -846,13 +851,28 @@ function getSeatsPerRow() {
     return seatsPerRow;
 }
 
-// 자리배치 모달 표시
-async function showSeatingModal() {
+function isSeatingPanelOpen() {
+    return document.getElementById('seatingPanel').style.display === 'block';
+}
+
+// 자리배치 패널 열기/닫기 (메인 화면에 표시)
+async function toggleSeatingPanel() {
+    if (isSeatingPanelOpen()) {
+        hideSeatingPanel();
+        return;
+    }
+
     if (!currentSubjectId) {
         alert('먼저 과목을 선택해주세요.');
         return;
     }
 
+    await openSeatingPanel(true);
+}
+
+// 자리배치 패널 내용 채우기
+async function openSeatingPanel(scroll) {
+    const panel = document.getElementById('seatingPanel');
     const selectedSubject = subjects.find(s => s.id === currentSubjectId);
     document.getElementById('seatingSubjectName').textContent =
         selectedSubject ? `- ${selectedSubject.name}` : '';
@@ -867,11 +887,15 @@ async function showSeatingModal() {
     document.getElementById('seatsPerRow').value = (seatingData && seatingData.seats_per_row) || 6;
 
     renderSeating();
-    document.getElementById('seatingModal').classList.add('show');
+    panel.style.display = 'block';
+
+    if (scroll) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
-function hideSeatingModal() {
-    document.getElementById('seatingModal').classList.remove('show');
+function hideSeatingPanel() {
+    document.getElementById('seatingPanel').style.display = 'none';
 }
 
 // 자리배치 학생 명단 저장 (RPC 함수를 통한 서버 측 처리)
@@ -1053,11 +1077,5 @@ document.getElementById('rulesModal').addEventListener('click', function(e) {
 document.getElementById('settingsModal').addEventListener('click', function(e) {
     if (e.target === this) {
         hideSettingsModal();
-    }
-});
-
-document.getElementById('seatingModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        hideSeatingModal();
     }
 });

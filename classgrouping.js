@@ -814,45 +814,57 @@ async function saveAdminPasswords() {
 
 // ===== 자리배치 =====
 
-// 자리배치 데이터는 과목별로 브라우저(localStorage)에 저장
-function seatingKey(kind) {
-    return `seating.${kind}.${currentSubjectId || 'default'}`;
-}
+// 현재 과목의 자리배치 데이터 (Supabase seating_arrangements 테이블)
+let seatingData = null;
 
-function loadSeatingNames() {
-    const saved = localStorage.getItem(seatingKey('names'));
-    if (saved) {
-        try {
-            return JSON.parse(saved);
-        } catch (e) {
-            console.error('자리배치 명단 파싱 에러:', e);
-        }
+// 자리배치 데이터 로드
+async function loadSeating() {
+    seatingData = null;
+    if (!currentSubjectId) return;
+
+    const { data, error } = await db
+        .from('seating_arrangements')
+        .select('*')
+        .eq('subject_id', currentSubjectId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('자리배치 로드 에러:', error);
+        return;
     }
-    // 저장된 명단이 없으면 과목의 학생 명단을 사용
-    return students.map(s => s.name);
+
+    seatingData = data;
 }
 
-function loadSeatingResult() {
-    const saved = localStorage.getItem(seatingKey('result'));
-    if (!saved) return null;
-    try {
-        return JSON.parse(saved);
-    } catch (e) {
-        console.error('자리배치 결과 파싱 에러:', e);
+// 입력된 줄 수 확인 (한 줄에 앉는 인원)
+function getSeatsPerRow() {
+    const seatsPerRow = parseInt(document.getElementById('seatsPerRow').value);
+    if (!seatsPerRow || seatsPerRow < 1 || seatsPerRow > 20) {
+        alert('줄 수는 1~20 사이로 설정해주세요.');
         return null;
     }
+    return seatsPerRow;
 }
 
 // 자리배치 모달 표시
-function showSeatingModal() {
+async function showSeatingModal() {
+    if (!currentSubjectId) {
+        alert('먼저 과목을 선택해주세요.');
+        return;
+    }
+
     const selectedSubject = subjects.find(s => s.id === currentSubjectId);
     document.getElementById('seatingSubjectName').textContent =
-        selectedSubject ? `- ${selectedSubject.name}` : '(과목을 선택하면 해당 과목의 명단이 표시됩니다)';
+        selectedSubject ? `- ${selectedSubject.name}` : '';
 
-    document.getElementById('seatingStudentText').value = loadSeatingNames().join(', ');
+    await loadSeating();
 
-    const savedRows = parseInt(localStorage.getItem(seatingKey('rows')));
-    document.getElementById('seatRows').value = savedRows > 0 ? savedRows : 4;
+    // 저장된 명단이 없으면 과목의 학생 명단을 사용
+    const names = (seatingData && seatingData.names && seatingData.names.length > 0)
+        ? seatingData.names
+        : students.map(s => s.name);
+    document.getElementById('seatingStudentText').value = names.join(', ');
+    document.getElementById('seatsPerRow').value = (seatingData && seatingData.seats_per_row) || 6;
 
     renderSeating();
     document.getElementById('seatingModal').classList.add('show');
@@ -862,38 +874,54 @@ function hideSeatingModal() {
     document.getElementById('seatingModal').classList.remove('show');
 }
 
-// 자리배치 학생 명단 저장
-function saveSeatingStudents() {
-    const names = parseStudentNames(document.getElementById('seatingStudentText').value);
+// 자리배치 학생 명단 저장 (RPC 함수를 통한 서버 측 처리)
+async function saveSeatingStudents() {
+    if (!currentSubjectId) {
+        alert('먼저 과목을 선택해주세요.');
+        return;
+    }
 
+    const names = parseStudentNames(document.getElementById('seatingStudentText').value);
     if (names.length === 0) {
         alert('학생 이름을 입력해주세요.');
         return;
     }
 
-    localStorage.setItem(seatingKey('names'), JSON.stringify(names));
+    const seatsPerRow = getSeatsPerRow();
+    if (!seatsPerRow) return;
+
+    const { data, error } = await db.rpc('admin_save_seating_list', {
+        admin_pw: currentAdminPassword,
+        p_subject_id: currentSubjectId,
+        p_seats_per_row: seatsPerRow,
+        p_names: names
+    });
+
+    if (error || data === false) {
+        console.error('자리배치 명단 저장 에러:', error);
+        alert('저장 중 오류가 발생했습니다.');
+        return;
+    }
+
+    await loadSeating();
     alert(`학생 명단이 저장되었습니다. (총 ${names.length}명)`);
 }
 
-// 자리배치 실행
-function runSeating() {
-    const names = parseStudentNames(document.getElementById('seatingStudentText').value);
+// 자리배치 실행 (RPC 함수를 통한 서버 측 처리)
+async function runSeating() {
+    if (!currentSubjectId) {
+        alert('먼저 과목을 선택해주세요.');
+        return;
+    }
 
+    const names = parseStudentNames(document.getElementById('seatingStudentText').value);
     if (names.length === 0) {
         alert('학생 이름을 입력해주세요.');
         return;
     }
 
-    const rows = parseInt(document.getElementById('seatRows').value);
-    if (!rows || rows < 1 || rows > 20) {
-        alert('줄 수는 1~20 사이로 설정해주세요.');
-        return;
-    }
-
-    if (rows > names.length) {
-        alert('줄 수가 학생 수보다 많습니다. 줄 수를 줄여주세요.');
-        return;
-    }
+    const seatsPerRow = getSeatsPerRow();
+    if (!seatsPerRow) return;
 
     // 학생 섞기 (Fisher-Yates 알고리즘)
     const shuffled = [...names];
@@ -902,64 +930,94 @@ function runSeating() {
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    // 1번부터 마지막 번호까지 자리 번호 부여
-    const seats = shuffled.map((name, index) => ({ seat: index + 1, name }));
+    // 섞인 순서가 곧 1번 자리부터 마지막 번호까지의 배치
+    const { data, error } = await db.rpc('admin_run_seating', {
+        admin_pw: currentAdminPassword,
+        p_subject_id: currentSubjectId,
+        p_seats_per_row: seatsPerRow,
+        p_names: names,
+        p_seat_names: shuffled
+    });
 
-    // 입력한 명단과 줄 수를 함께 저장
-    localStorage.setItem(seatingKey('names'), JSON.stringify(names));
-    localStorage.setItem(seatingKey('rows'), String(rows));
-    localStorage.setItem(seatingKey('result'), JSON.stringify({ rows, seats }));
+    if (error || data === false) {
+        console.error('자리배치 실행 에러:', error);
+        alert('자리배치 중 오류가 발생했습니다.');
+        return;
+    }
 
+    await loadSeating();
     renderSeating();
 }
 
-// 자리배치 초기화
-function resetSeating() {
+// 자리배치 초기화 (결과만 삭제, 명단은 유지)
+async function resetSeating() {
+    if (!currentSubjectId) {
+        alert('먼저 과목을 선택해주세요.');
+        return;
+    }
+
     if (!confirm('자리배치를 초기화하시겠습니까?')) return;
 
-    localStorage.removeItem(seatingKey('result'));
+    const { data, error } = await db.rpc('admin_reset_seating', {
+        admin_pw: currentAdminPassword,
+        p_subject_id: currentSubjectId
+    });
+
+    if (error || data === false) {
+        console.error('자리배치 초기화 에러:', error);
+        alert('자리배치 초기화 중 오류가 발생했습니다.');
+        return;
+    }
+
+    await loadSeating();
     renderSeating();
 }
 
-// 줄 수에 맞춰 자리를 나누기 (앞줄부터 고르게 배분)
-function splitSeatsIntoRows(seats, rows) {
-    const baseCount = Math.floor(seats.length / rows);
-    const extra = seats.length % rows;
+// 한 줄에 앉는 인원 수에 맞춰 자리를 나누기 (앞줄부터 채우고 남는 자리는 공란)
+function buildSeatRows(seatNames, seatsPerRow) {
+    const totalRows = Math.ceil(seatNames.length / seatsPerRow);
 
-    const result = [];
-    let index = 0;
-    for (let i = 0; i < rows; i++) {
-        const count = baseCount + (i < extra ? 1 : 0);
-        result.push(seats.slice(index, index + count));
-        index += count;
+    const rows = [];
+    for (let row = 0; row < totalRows; row++) {
+        const seats = [];
+        for (let col = 0; col < seatsPerRow; col++) {
+            const index = row * seatsPerRow + col;
+            seats.push(index < seatNames.length
+                ? { seat: index + 1, name: seatNames[index] }
+                : null);   // 학생이 없는 자리는 공란
+        }
+        rows.push(seats);
     }
-    return result;
+    return rows;
 }
 
 // 자리배치 결과 렌더링
 function renderSeating() {
     const container = document.getElementById('seatingResult');
-    const result = loadSeatingResult();
+    const seatNames = (seatingData && seatingData.seat_names) || [];
 
-    if (!result || !result.seats || result.seats.length === 0) {
+    if (seatNames.length === 0) {
         container.innerHTML = '<p class="seating-guide">줄 수를 정하고 [자리배치 실행]을 누르세요.</p>';
         return;
     }
 
-    const rowsOfSeats = splitSeatsIntoRows(result.seats, result.rows);
+    const seatsPerRow = seatingData.seats_per_row || 6;
+    const rows = buildSeatRows(seatNames, seatsPerRow);
 
     container.innerHTML = `
-        <div class="seating-info">전체 <span>${result.seats.length}명</span> / <span>${result.rows}줄</span> 배치</div>
+        <div class="seating-info">전체 <span>${seatNames.length}명</span> / 한 줄에 <span>${seatsPerRow}명</span>씩 <span>${rows.length}줄</span></div>
         <div class="seating-board">칠판 (앞)</div>
-        ${rowsOfSeats.map((rowSeats, rowIndex) => `
+        ${rows.map((rowSeats, rowIndex) => `
             <div class="seat-row">
                 <div class="seat-row-label">${rowIndex + 1}줄</div>
                 <div class="seat-row-seats">
-                    ${rowSeats.map(item => `
+                    ${rowSeats.map(item => item ? `
                         <div class="seat">
                             <div class="seat-num">${item.seat}</div>
                             <div class="seat-name">${escapeHtml(item.name)}</div>
                         </div>
+                    ` : `
+                        <div class="seat seat-empty"></div>
                     `).join('')}
                 </div>
             </div>

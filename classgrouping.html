@@ -213,10 +213,11 @@
             <div class="seating-setup">
                 <div class="seating-controls">
                     <label>줄 수:</label>
-                    <input type="number" id="seatRows" min="1" max="20" value="4">
+                    <input type="number" id="seatsPerRow" min="1" max="20" value="6">
                     <button class="admin-btn success" onclick="runSeating()">자리배치 실행</button>
                     <button class="admin-btn danger" onclick="resetSeating()">자리배치 초기화</button>
                 </div>
+                <p class="editor-hint" style="margin-top: -12px; margin-bottom: 15px;">* 줄 수 = 앞에서 봤을 때 한 줄에 앉는 인원 수입니다. (예: 6 → 한 줄에 6명)</p>
 
                 <h4 style="color: #666; margin-bottom: 8px;">학생 명단</h4>
                 <textarea id="seatingStudentText" class="seating-textarea" placeholder="예: 홍길동, 백두산, 금강산"></textarea>
@@ -234,7 +235,7 @@
 
     <!-- 푸터 -->
     <div class="footer">
-        <p>Made by Prof. Park with AI tools | Powered by <a href="https://www.anthropic.com/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v2.15)</p>
+        <p>Made by Prof. Park with AI tools | Powered by <a href="https://www.anthropic.com/claude-code" target="_blank">Claude Code</a>, <a href="https://github.com" target="_blank">GitHub</a>, <a href="https://supabase.com" target="_blank">Supabase</a>, <a href="https://vercel.com" target="_blank">Vercel</a> (v2.16)</p>
     </div>
 
     <script src="classgrouping.js"></script>

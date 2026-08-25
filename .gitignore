@@ -6,4 +6,5 @@ package-lock.json
 .env*.local
 .mcp.json
 .playwright-mcp/
+*.lnk
 nul

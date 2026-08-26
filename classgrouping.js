@@ -851,6 +851,30 @@ function getSeatsPerRow() {
     return seatsPerRow;
 }
 
+// 제외 좌석 입력값 파싱 ("4, 18" → [4, 18], 중복/잘못된 값은 제거)
+function parseExcludedSeats(text) {
+    const numbers = (text || '')
+        .split(/[^0-9]+/)
+        .filter(v => v !== '')
+        .map(v => parseInt(v, 10))
+        .filter(n => n > 0);
+    return [...new Set(numbers)].sort((a, b) => a - b);
+}
+
+// 현재 입력된 제외 좌석 확인
+function getExcludedSeats() {
+    return parseExcludedSeats(document.getElementById('excludedSeats').value);
+}
+
+// DB에 제외 좌석용 RPC(v3.3)가 아직 적용되지 않은 경우 안내
+function seatingRpcMissing(error) {
+    return !!error && (error.code === 'PGRST202' || /function|schema cache/i.test(error.message || ''));
+}
+
+const SEATING_SQL_GUIDE =
+    'Supabase에 자리배치 업데이트가 적용되지 않았습니다.\n' +
+    'supabase/seating_arrangements.sql 을 Supabase SQL Editor에서 한 번 실행해주세요.';
+
 function isSeatingPanelOpen() {
     return document.getElementById('seatingPanel').style.display === 'block';
 }
@@ -885,6 +909,8 @@ async function openSeatingPanel(scroll) {
         : students.map(s => s.name);
     document.getElementById('seatingStudentText').value = names.join(', ');
     document.getElementById('seatsPerRow').value = (seatingData && seatingData.seats_per_row) || 6;
+    document.getElementById('excludedSeats').value =
+        ((seatingData && seatingData.excluded_seats) || []).join(', ');
 
     renderSeating();
     panel.style.display = 'block';
@@ -918,12 +944,13 @@ async function saveSeatingStudents() {
         admin_pw: currentAdminPassword,
         p_subject_id: currentSubjectId,
         p_seats_per_row: seatsPerRow,
-        p_names: names
+        p_names: names,
+        p_excluded_seats: getExcludedSeats()
     });
 
     if (error || data === false) {
         console.error('자리배치 명단 저장 에러:', error);
-        alert('저장 중 오류가 발생했습니다.');
+        alert(seatingRpcMissing(error) ? SEATING_SQL_GUIDE : '저장 중 오류가 발생했습니다.');
         return;
     }
 
@@ -954,18 +981,19 @@ async function runSeating() {
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    // 섞인 순서가 곧 1번 자리부터 마지막 번호까지의 배치
+    // 섞인 순서대로 1번 자리부터 채우되, 제외 좌석은 건너뛴다
     const { data, error } = await db.rpc('admin_run_seating', {
         admin_pw: currentAdminPassword,
         p_subject_id: currentSubjectId,
         p_seats_per_row: seatsPerRow,
         p_names: names,
-        p_seat_names: shuffled
+        p_seat_names: shuffled,
+        p_excluded_seats: getExcludedSeats()
     });
 
     if (error || data === false) {
         console.error('자리배치 실행 에러:', error);
-        alert('자리배치 중 오류가 발생했습니다.');
+        alert(seatingRpcMissing(error) ? SEATING_SQL_GUIDE : '자리배치 중 오류가 발생했습니다.');
         return;
     }
 
@@ -997,18 +1025,37 @@ async function resetSeating() {
     renderSeating();
 }
 
+// 1번 자리부터 순서대로 학생을 배치 (제외 좌석은 번호만 남기고 비워둠)
+function buildSeatLayout(seatNames, excludedSeats) {
+    const excluded = new Set(excludedSeats || []);
+
+    const layout = [];
+    let nameIndex = 0;
+    let seat = 1;
+    while (nameIndex < seatNames.length) {
+        if (excluded.has(seat)) {
+            layout.push({ seat: seat, name: null, disabled: true });   // 사용 불가 좌석
+        } else {
+            layout.push({ seat: seat, name: seatNames[nameIndex] });
+            nameIndex++;
+        }
+        seat++;
+    }
+    return layout;
+}
+
 // 한 줄에 앉는 인원 수에 맞춰 자리를 나누기 (앞줄부터 채우고 남는 자리는 공란)
-function buildSeatRows(seatNames, seatsPerRow) {
-    const totalRows = Math.ceil(seatNames.length / seatsPerRow);
+function buildSeatRows(layout, seatsPerRow) {
+    const totalRows = Math.ceil(layout.length / seatsPerRow);
 
     const rows = [];
     for (let row = 0; row < totalRows; row++) {
         const seats = [];
         for (let col = 0; col < seatsPerRow; col++) {
             const index = row * seatsPerRow + col;
-            seats.push(index < seatNames.length
-                ? { seat: index + 1, name: seatNames[index] }
-                : null);   // 학생이 없는 자리는 공란
+            seats.push(index < layout.length
+                ? layout[index]
+                : null);   // 뒷줄에 남는 자리는 공란
         }
         rows.push(seats);
     }
@@ -1026,23 +1073,45 @@ function renderSeating() {
     }
 
     const seatsPerRow = seatingData.seats_per_row || 6;
-    const rows = buildSeatRows(seatNames, seatsPerRow);
+    const excludedSeats = seatingData.excluded_seats || [];
+    const layout = buildSeatLayout(seatNames, excludedSeats);
+    const rows = buildSeatRows(layout, seatsPerRow);
+
+    // 실제로 사용된 제외 좌석만 안내에 표시 (마지막 자리 번호보다 큰 값은 무시)
+    const lastSeat = layout.length;
+    const usedExcluded = excludedSeats.filter(seat => seat <= lastSeat);
 
     container.innerHTML = `
-        <div class="seating-info">전체 <span>${seatNames.length}명</span> / 한 줄에 <span>${seatsPerRow}명</span>씩 <span>${rows.length}줄</span></div>
+        <div class="seating-info">
+            전체 <span>${seatNames.length}명</span> / 한 줄에 <span>${seatsPerRow}명</span>씩 <span>${rows.length}줄</span> / 마지막 자리 <span>${lastSeat}번</span>
+            ${usedExcluded.length > 0
+                ? `<br>제외 좌석: <span>${usedExcluded.join(', ')}번</span> (사용 불가)`
+                : ''}
+        </div>
         <div class="seating-board">칠판 (앞)</div>
         ${rows.map((rowSeats, rowIndex) => `
             <div class="seat-row">
                 <div class="seat-row-label">${rowIndex + 1}줄</div>
                 <div class="seat-row-seats">
-                    ${rowSeats.map(item => item ? `
-                        <div class="seat">
-                            <div class="seat-num">${item.seat}</div>
-                            <div class="seat-name">${escapeHtml(item.name)}</div>
-                        </div>
-                    ` : `
-                        <div class="seat seat-empty"></div>
-                    `).join('')}
+                    ${rowSeats.map(item => {
+                        if (!item) {
+                            return `<div class="seat seat-empty"></div>`;
+                        }
+                        if (item.disabled) {
+                            return `
+                                <div class="seat seat-disabled">
+                                    <div class="seat-num">${item.seat}</div>
+                                    <div class="seat-name"></div>
+                                </div>
+                            `;
+                        }
+                        return `
+                            <div class="seat">
+                                <div class="seat-num">${item.seat}</div>
+                                <div class="seat-name">${escapeHtml(item.name)}</div>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `).join('')}

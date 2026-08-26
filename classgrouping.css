@@ -759,6 +759,11 @@ h1 {
     border-color: #667eea;
 }
 
+/* 제외 좌석은 여러 번호를 입력하므로 조금 넓게 */
+.seating-controls input.excluded-seats-input {
+    width: 140px;
+}
+
 .seating-textarea {
     width: 100%;
     height: 90px;
@@ -875,6 +880,18 @@ h1 {
     background: #f4f5f7;
     border: 2px dashed #ccc;
     box-shadow: none;
+}
+
+/* 제외 좌석 (모니터 불량 등으로 사용 불가) - 번호만 남기고 공란 */
+.seat-row .seat-row-seats .seat.seat-disabled {
+    background: #f4f5f7;
+    border: 2px dashed #bbb;
+    box-shadow: none;
+    color: #aaa;
+}
+
+.seat-row .seat-row-seats .seat.seat-disabled .seat-num {
+    opacity: 1;
 }
 
 @media (max-width: 600px) {

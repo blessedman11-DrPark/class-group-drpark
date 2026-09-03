@@ -1092,7 +1092,7 @@ function renderSeating() {
         ${rows.map((rowSeats, rowIndex) => `
             <div class="seat-row">
                 <div class="seat-row-label">${rowIndex + 1}줄</div>
-                <div class="seat-row-seats">
+                <div class="seat-row-seats" style="--seats-per-row: ${seatsPerRow}">
                     ${rowSeats.map(item => {
                         if (!item) {
                             return `<div class="seat seat-empty"></div>`;
